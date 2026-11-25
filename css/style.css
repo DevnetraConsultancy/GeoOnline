@@ -284,3 +284,15 @@ body.dark .nm.adm{color:#fff}
 #pack{position:absolute;left:12px;bottom:34px;z-index:900;background:rgba(13,36,40,.88);color:#fff;font-size:12px;padding:5px 11px;border-radius:999px;opacity:0;transform:translateY(6px);transition:.25s;pointer-events:none;max-width:calc(100% - 80px)}
 #pack.on{opacity:1;transform:none}#pack.done{background:rgba(31,157,122,.95)}
 body.home #pack{display:none}
+
+/* ---------- empire extent chooser ---------- */
+.ext{border:1px solid var(--line);border-radius:12px;padding:9px 10px 6px;margin:4px 0 12px;background:#fbfaf5}
+.exth{display:flex;flex-direction:column;margin-bottom:6px}.exth b{font-size:13.5px}.exth small{color:var(--mute);font-size:11.5px}
+.ext button{display:block;width:100%;text-align:left;border:1px solid transparent;background:none;border-radius:8px;padding:5px 7px;font-size:13px;line-height:1.35;margin:1px 0}
+.ext button:hover{background:#fff;border-color:var(--line)}
+.ext button.on{background:#fff;border-color:var(--ink);font-weight:600}
+.ext button small{display:block;font-weight:400;font-size:11.5px;color:var(--mute);margin-top:2px}
+.ext button em{font-style:normal}
+.ext .sw{display:inline-flex;gap:2px;margin-right:7px;vertical-align:-1px}
+.ext .sw i{width:11px;height:11px;border-radius:3px;display:inline-block;opacity:.85}
+.extsrc{font-size:11px;color:var(--mute);margin:6px 2px 2px}

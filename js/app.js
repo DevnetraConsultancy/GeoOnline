@@ -174,7 +174,12 @@ function buildRemote(p) {
         var pr = f.properties || {}, nm = pr.NAME || pr.name; if (!f.geometry || !status[nm] || found[nm]) return; found[nm] = 1;
         p.items.push({ k: 'poly', geo: f.geometry, n: nm, s: { members: 'Member', observers: 'Observer', partners: 'Partner / dialogue partner', applicants: 'Applicant / invited' }[status[nm]], d: notes[nm] || '', t: status[nm] });
       });
-      Object.keys(status).forEach(function (n) { if (!found[n]) console.warn('[GeoOnline] grouping country not on map:', R.g, n); });
+      var DOTS = GR.dots || {};
+      Object.keys(status).forEach(function (n) {
+        if (found[n]) return;
+        if (DOTS[n]) p.items.push({ k: 'pt', n: n, lat: DOTS[n][0], lng: DOTS[n][1], s: { members: 'Member', observers: 'Observer', partners: 'Partner / dialogue partner', applicants: 'Applicant / invited' }[status[n]] + ' · small state (dot)', d: notes[n] || '', t: status[n] });
+        else console.warn('[GeoOnline] grouping country not on map:', R.g, n);
+      });
     } else if (R.src === 'theme') {   // thematic area maps: merge polygons with the same name into one item
       var byName = {}, order = [];
       data.features.forEach(function (f) {
@@ -247,7 +252,7 @@ function initMap() {
   map.createPane('refl').style.zIndex = 390; map.getPane('refl').style.pointerEvents = 'none';
   namesEl = document.createElement('div'); namesEl.id = 'names'; map.getPane('names').appendChild(namesEl);
   refEl = document.createElement('div'); refEl.id = 'refl'; map.getPane('refl').appendChild(refEl);
-  bRend = L.canvas({ pane: 'bnd', padding: 0.3 }); inG = L.layerGroup().addTo(map);
+  bRend = L.canvas({ pane: 'bnd', padding: 0.3 }); inG = L.layerGroup().addTo(map); extG = L.layerGroup().addTo(map);
   stG = L.layerGroup().addTo(map); bgG = L.layerGroup().addTo(map); layerG = L.featureGroup().addTo(map); tmpG = L.layerGroup().addTo(map);
   map.createPane('offbase').style.zIndex = 210; map.getPane('offbase').style.pointerEvents = 'none';
   if (navigator.onLine === false) setBase('offline', true); else setBase(store.get('base', 'physical'));
@@ -384,7 +389,7 @@ function packSoon(k) {   // after the page settles, quietly download the India +
 /* ---------------- boundaries (user-styled) ---------------- */
 var BDEF = { st: { on: true, c: '#7a5c45', w: 1, o: 0.8, d: 'dash' }, in: { on: true, c: '#8e2a4a', w: 1.6, o: 0.9, d: 'solid' } };
 var bst = (function () { var s = store.get('bstyle', null) || {}; return { st: Object.assign({}, BDEF.st, s.st), in: Object.assign({}, BDEF.in, s.in), esri: !!s.esri }; })();
-var bRend = null, stL = null, inL = null, inG = null;
+var bRend = null, stL = null, inL = null, inG = null, extG = null, extSel = {};
 function bStyle(k) {
   var s = bst[k], w = +s.w;
   var da = s.d === 'dash' ? (w * 4).toFixed(1) + ' ' + (w * 3).toFixed(1) : s.d === 'dot' ? '0.1 ' + (w * 2.6).toFixed(1) : s.d === 'dashdot' ? (w * 6).toFixed(1) + ' ' + (w * 2.5).toFixed(1) + ' 0.1 ' + (w * 2.5).toFixed(1) : null;
@@ -560,7 +565,37 @@ function drawRef(placed) {
   refEl.appendChild(frag);
 }
 
+/* ---------------- empire extent (coloured territory under the pins) ---------------- */
+function extList() { return cur && GEO.EXTENT ? GEO.EXTENT[cur.id] : null; }
+function extIndex() { var E = extList(); if (!E) return -1; if (extSel[cur.id] != null) return extSel[cur.id]; for (var i = 0; i < E.length; i++) if (E[i].def) return i; return 0; }
+function drawExtent() {
+  if (!extG) return; extG.clearLayers();
+  var E = extList(), i = extIndex(), p = cur; if (!E || i < 0) return;
+  var e = E[i];
+  loadRemote('hist-' + e.y).then(function (d) {
+    if (cur !== p || extIndex() !== i) return;
+    d.features.forEach(function (f) {
+      var part = e.parts.filter(function (x) { return x[0] === f.properties.NAME; })[0]; if (!part) return;
+      L.geoJSON(f, { pane: 'bg', interactive: false, style: { color: part[1], weight: 1.6, opacity: 0.9, dashArray: '5 4', fillColor: part[1], fillOpacity: 0.22 } }).addTo(extG);
+    });
+  }).catch(function () {});
+}
+function extHtml() {
+  var E = extList(); if (!E) return '';
+  var i = extIndex();
+  return '<div class="ext"><div class="exth"><b>🗺 সাম্রাজ্যের বিস্তার</b><small>রঙিন অংশ = সেই সময়ের আনুমানিক এলাকা</small></div>' + E.map(function (e, k) {
+    return '<button data-act="ext" data-i="' + k + '"' + (k === i ? ' class="on"' : '') + '><span class="sw">' + e.parts.map(function (x) { return '<i style="background:' + x[1] + '"></i>'; }).join('') + '</span>' + esc(e.label) +
+      (k === i && e.parts.length > 1 ? '<small>' + e.parts.map(function (x) { return '<em style="color:' + x[1] + '">■</em> ' + esc(x[0]); }).join(' · ') + '</small>' : '') + '</button>';
+  }).join('') + '<button data-act="ext" data-i="-1"' + (i < 0 ? ' class="on"' : '') + '>✕ রঙ বন্ধ</button><p class="extsrc">সীমানা: historical-basemaps (GPL-3.0) — আনুমানিক, পরীক্ষার আগে NCERT অ্যাটলাস মিলিয়ে নিও।</p></div>';
+}
+
 /* ---------------- study ---------------- */
+function oldClue(it) {   // old names only — strip eras in brackets, "→ new name" parts and any word of today's name
+  var o = String(it.dt && it.dt.old || '').replace(/\([^)]*\)/g, '').split('→')[0];
+  var words = it.n.toLowerCase().replace(/\(.*?\)/g, ' ').split(/[^a-z]+/).filter(function (w) { return w.length > 3; });
+  o = o.split(/[;,\/]/).map(function (x) { return x.trim(); }).filter(function (x) { var l = x.toLowerCase(); return x && !words.some(function (w) { return l.indexOf(w) >= 0; }); }).join(' · ');
+  return o.length > 2 ? o : '';
+}
 function nBooks(it) { return it.dt && it.dt.books ? it.dt.books.length : 0; }
 function detailHtml(it, open) {
   var D = it.dt; if (!D) return '';
@@ -612,7 +647,7 @@ function chipsHtml() {
 }
 function renderPanel() {
   if (mode === 'quiz') { if (Q) quizPanel(); else quizSetup(); return; }
-  panel.innerHTML = '<p class="intro">' + esc(cur.intro || '') + '</p>' + chipsHtml() +
+  panel.innerHTML = '<p class="intro">' + esc(cur.intro || '') + '</p>' + extHtml() + chipsHtml() +
     '<input id="q" class="find" placeholder="এই পাতায় খোঁজো… (' + cur.items.length + 'টি)"><div id="list" class="list"></div>';
   fillList('');
   $('#q').addEventListener('input', function (e) { fillList(e.target.value); });
@@ -645,6 +680,7 @@ function quizSetup() {
     card('pin', '📍', 'ফাঁকা ম্যাপে পিন বসাও', 'কোনো চিহ্ন নেই — ঠিক জায়গায় ক্লিক করো, কত কিমি দূরে পড়ল দেখাবে।', !pts.length) +
     card('order', '↕', 'উত্তর→দক্ষিণ / পশ্চিম→পূর্ব সাজাও', 'UPSC প্রিলিমসের ধাঁচে — ৪টি জায়গা সঠিক ক্রমে সাজাও।', pts.length < 4) +
     (cur.items.some(nBooks) ? card('book', '📚', 'এই বইটি কার লেখা?', 'বইয়ের নাম ও সাল দেওয়া থাকবে — ৪ জন লেখকের মধ্যে ঠিকজনকে বাছো।') : '') +
+    (cur.items.filter(function (x) { return x.dt && x.dt.old; }).length >= 4 ? card('old', '🏺', 'পুরনো নাম → আজকের জায়গা', 'ইতিহাসের নাম দেওয়া থাকবে (যেমন Akbarabad, Pataliputra) — আজকের নামটা বাছো।') : '') +
     card('weak', '🔁', 'দুর্বল জায়গা ঝালিয়ে নাও' + (weak ? ' (' + weak + ')' : ''), weak ? 'আগে যেগুলো ভুল করেছ শুধু সেগুলো।' : 'এখনও কোনো দুর্বল জায়গা নেই — আগে অন্য কুইজ খেলো।', !weak) +
     (weak ? '<button class="qacts-link" data-act="qreset">দুর্বল-তালিকা মুছে দাও</button>' : '');
 }
@@ -667,6 +703,11 @@ function mkOrder(items) {
 function quizStart(kind, pool) {
   if (kind === 'weak') { kind = 'name'; pool = weakItems(); }
   var bks = null;
+  if (kind === 'old') {
+    var olds = shuffle(cur.items.filter(visible).filter(function (x) { return x.dt && x.dt.old && oldClue(x); })); if (olds.length < 4) return;
+    if (qCount) olds = olds.slice(0, qCount);
+    pool = olds; bks = olds.map(function (x) { return { t: oldClue(x), old: true }; });
+  }
   if (kind === 'book') {
     var pairs = []; cur.items.filter(visible).forEach(function (it) { (it.dt && it.dt.books || []).forEach(function (b) { pairs.push([it, b]); }); });
     if (cur.items.filter(nBooks).length < 4) return;
@@ -681,7 +722,7 @@ function quizStart(kind, pool) {
     var want = qCount || Math.min(15, Math.max(5, Math.floor(items.length / 4))); qs = [];
     for (var i = 0; i < want * 3 && qs.length < want; i++) { var o = mkOrder(items); if (o) qs.push(o); }
     if (!qs.length) return;
-  } else if (kind === 'book') qs = pool;
+  } else if (kind === 'book' || kind === 'old') qs = pool;
   else { qs = pool ? shuffle(items.slice()) : prioritise(items); if (!pool && qCount) qs = qs.slice(0, qCount); }
   Q = { kind: kind, bks: bks, qs: qs, i: 0, ok: 0, streak: 0, bestStreak: 0, wrong: [], t0: Date.now(), lock: false, km: 0 };
   setLabels(false);
@@ -700,12 +741,12 @@ function quizPanel() {
     h += '<div class="ask"><small>↕ ' + (it.dir === 'ns' ? 'উত্তর থেকে দক্ষিণে সাজাও (সবচেয়ে উত্তরেরটা আগে)' : 'পশ্চিম থেকে পূর্বে সাজাও (সবচেয়ে পশ্চিমেরটা আগে)') + '</small><h2>' + (it.dir === 'ns' ? 'উত্তর ↓ দক্ষিণ' : 'পশ্চিম → পূর্ব') + '</h2><p class="hint">ক্রম অনুযায়ী ক্লিক করো (কীবোর্ড 1–4)</p></div><div class="opts">' +
       it.items.map(function (o, i) { var k = Q.pick.indexOf(o); return '<button data-act="ord" data-i="' + i + '"' + (k >= 0 ? ' class="picked"' : '') + '><kbd>' + (k >= 0 ? '#' + (k + 1) : i + 1) + '</kbd>' + esc(o.n) + ' <small>' + esc(o.s) + '</small></button>'; }).join('') + '</div>' +
       (Q.pick.length ? '<button class="btn ghost" data-act="ordreset">↺ আবার সাজাও</button>' : '');
-  } else if (Q.kind === 'name' || Q.kind === 'book') {
+  } else if (Q.kind === 'name' || Q.kind === 'book' || Q.kind === 'old') {
     var okx = function (x) { return x !== it && x.n !== it.n && (Q.kind !== 'book' || nBooks(x)); };
     var pool = cur.items.filter(function (x) { return okx(x) && x.t === it.t; });
     if (pool.length < 3) pool = cur.items.filter(okx);
     var seen = {}, opts = [it]; shuffle(pool).forEach(function (x) { if (opts.length < 4 && !seen[x.n]) { seen[x.n] = 1; opts.push(x); } }); shuffle(opts); Q.opts = opts;
-    h += (Q.kind === 'book' ? '<div class="ask"><small>📚 এই বইটি / গ্রন্থটি কার লেখা?</small><h2 class="bkq">' + esc(Q.bk.t) + '</h2><p class="hint">' + esc([Q.bk.y, Q.bk.lang].filter(Boolean).join(' · ')) + '</p></div>'
+    h += (Q.kind === 'old' ? '<div class="ask"><small>🏺 ইতিহাসে এই নামে পরিচিত ছিল — আজ কোন জায়গা?</small><h2 class="bkq">' + esc(Q.bk.t) + '</h2><p class="hint"></p></div>' : Q.kind === 'book' ? '<div class="ask"><small>📚 এই বইটি / গ্রন্থটি কার লেখা?</small><h2 class="bkq">' + esc(Q.bk.t) + '</h2><p class="hint">' + esc([Q.bk.y, Q.bk.lang].filter(Boolean).join(' · ')) + '</p></div>'
       : '<div class="ask"><small>জ্বলজ্বলে জায়গাটা কোনটা?</small><h2>?</h2><p class="hint"></p></div>') + '<div class="opts">' + opts.map(function (o, i) { return '<button data-act="opt" data-i="' + i + '"><kbd>' + (i + 1) + '</kbd>' + esc(o.n) + '</button>'; }).join('') + '</div>';
   } else {
     h += '<div class="ask"><small>' + (Q.kind === 'pin' ? '📍 ফাঁকা ম্যাপে ঠিক জায়গায় ক্লিক করো' : '👆 ম্যাপে ঠিক চিহ্নে ক্লিক করো') + '</small><h2>' + esc(it.n) + '</h2><p class="hint" id="hint"></p></div>';
@@ -737,7 +778,7 @@ function answer(ok, extra, noStat) {
   if (ok) { Q.ok++; Q.streak++; Q.bestStreak = Math.max(Q.bestStreak, Q.streak); } else { Q.streak = 0; Q.wrong.push(it); }
   var fb = $('#fb'); if (fb) fb.innerHTML = '<div class="fb ' + (ok ? 'ok' : 'no') + '"><b>' + (ok ? '✔ একদম ঠিক!' : '✘ ভুল হল') + '</b> ' + (extra || '') + '<div class="fbn">' + esc(it.n) + ' <small>' + esc(it.s) + '</small></div><p>' + esc(it.d) + '</p></div><button class="next" data-act="qnext">' + (Q.i + 1 < Q.qs.length ? 'পরের প্রশ্ন →' : 'ফলাফল দেখো →') + '</button>';
   var bar = panel.querySelector('.qbar'); if (bar) { bar.children[1].textContent = '✔ ' + Q.ok; bar.children[2].textContent = '🔥 ' + Q.streak; }
-  if (ok && Q.kind !== 'pin' && Q.kind !== 'order' && Q.kind !== 'book') Q.auto = setTimeout(quizNext, 1400);
+  if (ok && Q.kind !== 'pin' && Q.kind !== 'order' && Q.kind !== 'book' && Q.kind !== 'old') Q.auto = setTimeout(quizNext, 1400);
 }
 function quizNext() { if (!Q) return; clearTimeout(Q.auto); Q.i++; if (Q.i >= Q.qs.length) quizEnd(); else quizAsk(); }
 function quizEnd() {
@@ -793,7 +834,7 @@ function buildNav() {
     if (g[3] !== lastSub) { lastSub = g[3]; var S = SUBJECTS.filter(function (s) { return s[0] === g[3]; })[0]; if (S) h += '<div class="subj">' + S[1] + '</div>'; }
     var isOpen = open[g[0]] || (cur && cur.group === g[0]);
     h += '<div class="grp' + (isOpen ? '' : ' shut') + '" data-g="' + g[0] + '"><button>' + g[1] + '<small>' + ps.length + '</small></button><div class="links">' + ps.map(function (p) {
-      var b = Math.max(best[p.id + ':find'] || 0, best[p.id + ':name'] || 0, best[p.id + ':pin'] || 0, best[p.id + ':book'] || 0);
+      var b = Math.max(best[p.id + ':find'] || 0, best[p.id + ':name'] || 0, best[p.id + ':pin'] || 0, best[p.id + ':book'] || 0, best[p.id + ':old'] || 0);
       return '<a href="#/' + p.id + '" data-id="' + p.id + '"' + (cur === p ? ' class="on"' : '') + '><span class="ic">' + (p.icon || '•') + '</span><span class="tx">' + esc(p.title) + '<small>' + esc(p.bn || '') + '</small></span>' + (b ? '<span class="st">★' + b + '</span>' : '') + '<span class="ct">' + countOf(p) + '</span></a>';
     }).join('') + '</div></div>';
   });
@@ -819,10 +860,10 @@ function go() {
   document.body.classList.toggle('home', !p); document.body.classList.remove('nav');
   $('#mStudy').classList.add('on'); $('#mQuiz').classList.remove('on');
   buildNav();
-  if (!p) { layerG.clearLayers(); tmpG.clearLayers(); bgG.clearLayers(); stG.clearLayers(); inG.clearLayers(); refEl.innerHTML = ''; renderHome(); return; }
+  if (!p) { layerG.clearLayers(); tmpG.clearLayers(); bgG.clearLayers(); stG.clearLayers(); inG.clearLayers(); extG.clearLayers(); refEl.innerHTML = ''; renderHome(); return; }
   $('#ptitle').textContent = (p.icon ? p.icon + ' ' : '') + p.title; $('#psub').textContent = (p.bn || '') + ' · ' + countOf(p) + 'টি';
   layerG.clearLayers(); tmpG.clearLayers(); namesEl.innerHTML = '';
-  map.invalidateSize(); fit(); loadBg();
+  map.invalidateSize(); fit(); loadBg(); drawExtent();
   var ready = function () {
     if (cur !== p) return;
     $('#psub').textContent = (p.bn || '') + ' · ' + p.items.length + 'টি'; buildNav();
@@ -879,6 +920,7 @@ panel.addEventListener('click', function (e) {
   var t = e.target.closest('[data-act]'); if (!t) return; var a = t.dataset.act;
   if (a === 'sel') select(cur.items[+t.dataset.i], true);
   else if (a === 'chip') { hidden[t.dataset.t] = !hidden[t.dataset.t]; sel = null; render(); renderPanel(); }
+  else if (a === 'ext') { extSel[cur.id] = +t.dataset.i; drawExtent(); var ex = panel.querySelector('.ext'); if (ex) ex.outerHTML = extHtml(); }
   else if (a === 'dclose') { var dc = $('#dcard'); if (dc) dc.remove(); }
   else if (a === 'qn') { qCount = +t.dataset.n; quizSetup(); }
   else if (a === 'qstart') quizStart(t.dataset.kind);
@@ -895,14 +937,14 @@ panel.addEventListener('click', function (e) {
   else if (a === 'opt') {
     if (!Q || Q.lock) return; var o = Q.opts[+t.dataset.i], ok = o === Q.cur;
     var bs = panel.querySelectorAll('.opts button'); for (var i = 0; i < bs.length; i++) { if (Q.opts[i] === Q.cur) bs[i].classList.add('ok'); else if (i === +t.dataset.i) bs[i].classList.add('no'); }
-    if (Q.kind === 'book') { ring(Q.cur, '#1f9d7a'); focusOn(Q.cur, true); }
-    tag(Q.cur, Q.cur.n, ok ? 'ok' : 'no'); answer(ok, (ok ? '' : 'তুমি বেছেছ: <b>' + esc(o.n) + '</b>') + (Q.bk && Q.bk.sum ? '<p class="bksum">📖 ' + esc(Q.bk.sum) + '</p>' : ''));
+    if (Q.kind === 'book' || Q.kind === 'old') { ring(Q.cur, '#1f9d7a'); focusOn(Q.cur, true); }
+    tag(Q.cur, Q.cur.n, ok ? 'ok' : 'no'); answer(ok, (ok ? '' : 'তুমি বেছেছ: <b>' + esc(o.n) + '</b>') + (Q.bk && Q.bk.sum ? '<p class="bksum">📖 ' + esc(Q.bk.sum) + '</p>' : '') + (Q.bk && Q.bk.old && Q.cur.dt ? '<p class="bksum">🏺 ' + esc(Q.cur.dt.old) + '</p>' : ''));
   }
 });
 document.addEventListener('keydown', function (e) {
   if (!Q || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
   if (Q.lock && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); quizNext(); }
-  else if (!Q.lock && (Q.kind === 'name' || Q.kind === 'order' || Q.kind === 'book') && e.key >= '1' && e.key <= '4') { var b = panel.querySelectorAll('.opts button')[+e.key - 1]; if (b) b.click(); }
+  else if (!Q.lock && (Q.kind === 'name' || Q.kind === 'order' || Q.kind === 'book' || Q.kind === 'old') && e.key >= '1' && e.key <= '4') { var b = panel.querySelectorAll('.opts button')[+e.key - 1]; if (b) b.click(); }
 });
 $('#nav').addEventListener('click', function (e) { var b = e.target.closest('.grp>button'); if (!b) return; var g = b.parentNode, s = store.get('open', {}); g.classList.toggle('shut'); s[g.dataset.g] = !g.classList.contains('shut'); store.set('open', s); });
 $('#home').addEventListener('click', function (e) { var q = e.target.closest('[data-quiz]'); if (q) { e.preventDefault(); location.hash = '#/' + q.dataset.quiz + '/quiz'; } });
