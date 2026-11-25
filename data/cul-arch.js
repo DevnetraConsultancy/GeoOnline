@@ -154,7 +154,7 @@ GEO.add({
     ['Aurangabad Caves', 19.910, 75.306, 'Maharashtra', '12 Buddhist caves, 6th–7th c.; Vajrayana goddesses (Tara).', 'buddhist'],
     ['Barabar & Nagarjuni Caves', 25.005, 85.063, 'Bihar (Jehanabad)', 'Oldest rock-cut caves (Mauryan, 3rd c. BCE) given by Ashoka & Dasharatha to Ajivikas; Lomas Rishi gateway; mirror polish.', 'mixed'],
     ['Udayagiri Caves (Vidisha)', 23.537, 77.772, 'Madhya Pradesh', 'Gupta, Chandragupta II (c. 401 CE); colossal Varaha panel; early Hindu rock-cut shrines.', 'hindu'],
-    ['Bagh Caves', 22.360, 74.800, 'Madhya Pradesh (Dhar)', 'Buddhist caves, 5th–6th c.; murals similar to Ajanta; on the Baghini river.', 'buddhist'],
+    ['Bagh Caves', 22.3227, 74.8062, 'Madhya Pradesh (Dhar)', 'Buddhist caves, 5th–6th c.; murals similar to Ajanta; on the Baghini river.', 'buddhist'],
     ['Udayagiri & Khandagiri Caves', 20.263, 85.786, 'Odisha (Bhubaneswar)', 'Jain caves by Chedi king Kharavela, 1st c. BCE; Hathigumpha inscription; Rani Gumpha.', 'jain'],
     ['Badami Cave Temples', 15.919, 75.677, 'Karnataka (Bagalkot)', 'Chalukya Mangalesha, 6th c.; 3 Hindu + 1 Jain caves; 18-armed Nataraja.', 'mixed'],
     ['Ravanaphadi Cave, Aihole', 16.020, 75.884, 'Karnataka (Bagalkot)', 'Early Chalukya Shaiva rock-cut cave, 6th c.; dancing Shiva panels.', 'hindu'],

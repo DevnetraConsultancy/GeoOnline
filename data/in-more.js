@@ -414,7 +414,7 @@ GEO.add({
   ['Moreh–Tamu',24.250,94.300,'Manipur','India–Myanmar ICP; India–Myanmar–Thailand Trilateral Highway.','cross'],
   ['Zokhawthar–Rih',23.360,93.390,'Mizoram','India–Myanmar border trade point.','cross'],
   ['Siliguri Corridor (Chicken\'s Neck)',26.600,88.300,'West Bengal','~22 km-wide strip linking the NE with mainland; Nepal & Bangladesh on either side.','choke'],
-  ['Tin Bigha Corridor',26.270,88.990,'West Bengal','Leased to Bangladesh to reach Dahagram–Angarpota enclave.','choke'],
+  ['Tin Bigha Corridor',26.3003,88.9453,'West Bengal','Leased to Bangladesh to reach Dahagram–Angarpota enclave.','choke'],
   ['Kalapani (Lipulekh tri-junction)',30.190,80.990,'Uttarakhand','India–Nepal–China tri-junction area; source of Kali; disputed by Nepal.','choke'],
   ['Dhanushkodi',9.180,79.420,'Tamil Nadu','Nearest Indian land to Sri Lanka; Ram Setu (Adam\'s Bridge) begins.','choke']
  ]
@@ -454,7 +454,7 @@ GEO.add({
   ['Lachung',27.690,88.740,'Sikkim','Gateway to Yumthang valley.','he'],
   ['Tawang',27.590,91.860,'Arunachal Pradesh','Tawang monastery — largest in India.','he'],
   ['Bomdila',27.260,92.420,'Arunachal Pradesh','West Kameng; on the Sela–Tawang road.','he'],
-  ['Ziro',27.590,93.830,'Arunachal Pradesh','Apatani plateau; Ziro festival; UNESCO tentative list.','he'],
+  ['Ziro',27.5417,93.8161,'Arunachal Pradesh','Apatani plateau; Ziro festival; UNESCO tentative list.','he'],
   ['Shillong',25.580,91.890,'Meghalaya','"Scotland of the East".','he'],
   ['Haflong',25.170,93.020,'Assam','Only hill station of Assam (Dima Hasao).','he'],
   ['Kohima',25.670,94.110,'Nagaland','Battle of Kohima (1944); Hornbill festival at Kisama.','he'],

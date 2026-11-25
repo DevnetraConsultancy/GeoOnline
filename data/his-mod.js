@@ -352,7 +352,7 @@ GEO.add({
   ['Walong (1962)',28.129,97.017,'Arunachal Pradesh (Anjaw)','Oct–Nov 1962 Lohit valley battle — rare Indian counter-attack; Walong War Memorial.','indo-china'],
   ['Nathu La (1967)',27.387,88.831,'Sikkim','11–14 Sept 1967 clash over border fencing; Chinese pushed back — revenge for 1962.','indo-china'],
   ['Cho La (1967)',27.423,88.801,'Sikkim','1 Oct 1967 clash a few km NW of Nathu La; Chinese withdrew.','indo-china'],
-  ['Sumdorong Chu (1986–87)',27.782,91.781,'Arunachal Pradesh (Tawang)','Wangdung standoff with China; Operation Falcon (Gen. K. Sundarji) airlifted troops.','indo-china'],
+  ['Sumdorong Chu (1986–87)',27.8,91.745,'Arunachal Pradesh (Tawang)','Wangdung standoff with China; Operation Falcon (Gen. K. Sundarji) airlifted troops.','indo-china'],
   ['Doklam (2017)',27.300,88.933,'Bhutan (near Sikkim trijunction)','73-day standoff June–Aug 2017 over Chinese road building on Bhutan-claimed plateau.','indo-china'],
   ['Galwan Valley (2020)',34.749,78.166,'Ladakh','15 June 2020 clash: 20 Indian soldiers incl. Col. B. Santosh Babu (MVC) killed.','indo-china'],
   ['Haji Pir Pass (1965)',33.979,74.084,'PoK / J&K (Uri–Poonch)','Captured 28 Aug 1965 (Maj. Ranjit Singh Dayal); returned under Tashkent Declaration 1966.','indo-pak'],
