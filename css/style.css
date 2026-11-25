@@ -281,3 +281,6 @@ body.dark .nm.adm{color:#fff}
 .sfoot .copy{display:block;margin-top:4px;color:#b9d2cd;font-weight:600;letter-spacing:.02em}
 .hfoot .copy{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);color:var(--ink);font-size:13px}
 .hfoot .copy a{color:var(--ver)}
+#pack{position:absolute;left:12px;bottom:34px;z-index:900;background:rgba(13,36,40,.88);color:#fff;font-size:12px;padding:5px 11px;border-radius:999px;opacity:0;transform:translateY(6px);transition:.25s;pointer-events:none;max-width:calc(100% - 80px)}
+#pack.on{opacity:1;transform:none}#pack.done{background:rgba(31,157,122,.95)}
+body.home #pack{display:none}

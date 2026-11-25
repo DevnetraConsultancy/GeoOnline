@@ -60,6 +60,6 @@ Code © 2026 **Devnetra Consultancy**, released under the [MIT License](LICENSE)
 - Indian state boundaries: india-in-data (based on Survey of India maps).
 - Historical empire boundaries: [historical-basemaps](https://github.com/aourednik/historical-basemaps) by A. Ourednik — GPL-3.0; approximate.
 - Pin coordinates cross-checked against Wikipedia / Wikidata.
-- Map library: [Leaflet](https://leafletjs.com/) (BSD-2-Clause).
+- Map library: [Leaflet](https://leafletjs.com/) (BSD-2-Clause). Fonts: Fraunces & Hind Siliguri (SIL Open Font License 1.1).
 
 > Boundaries are for study only and are not an official document. Verify with NCERT / Survey of India maps before the exam.

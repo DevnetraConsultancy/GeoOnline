@@ -20,9 +20,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
----------------------------------------------------------------------------
-Third-party material bundled in this repository keeps its own licence:
-- vendor/leaflet/ — Leaflet, BSD-2-Clause.
-- data/geo/hist-*.js — derived from historical-basemaps by A. Ourednik, GPL-3.0.
-- Natural Earth data (rivers, borders, cities) — public domain.
-- vendor/fonts/ — Fraunces and Hind Siliguri, SIL Open Font License 1.1.

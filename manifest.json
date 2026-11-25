@@ -1,0 +1,17 @@
+{
+  "name": "GeoOnline — UPSC Map Atlas",
+  "short_name": "GeoOnline",
+  "description": "Interactive UPSC map atlas and quiz — geography, world atlas & IR, history, art & culture, books & philosophy. Works offline.",
+  "lang": "bn",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8f4ea",
+  "theme_color": "#0d2428",
+  "icons": [
+    { "src": "assets/logo.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

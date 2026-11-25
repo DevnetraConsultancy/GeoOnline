@@ -269,18 +269,19 @@ function setBase(k, auto) {
       offL = L.geoJSON(d, { pane: 'offbase', interactive: false, renderer: L.canvas({ pane: 'offbase' }), style: { color: '#cbbf9f', weight: 0.6, fillColor: '#f4eedc', fillOpacity: 1 } }).addTo(map);
     }).catch(function () {});
   } else {
-    var ok = 0, bad = 0, lyr = L.tileLayer(BASES[k][1], Object.assign({ maxZoom: 12 }, BASES[k][2]));
+    var ok = 0, bad = 0, lyr = L.tileLayer(BASES[k][1], Object.assign({ maxZoom: 12, crossOrigin: true }, BASES[k][2]));
     lyr.on('tileload', function () { ok++; });
     lyr.on('tileerror', function () { if (++bad >= 4 && !ok && baseL === lyr) setBase('offline', true); });   // no internet → fall back
     baseL = lyr.addTo(map); baseL.bringToBack();
   }
   document.body.classList.toggle('dark', k === 'dark' || k === 'sat');
   if (!auto) store.set('base', k);
+  packSoon(k);
   $('#bsel').value = k;
 }
 function setLabels(on) {
   if (labelL) { map.removeLayer(labelL); labelL = null; }
-  if (on) labelL = L.tileLayer(LABELS, { pane: 'lbl', maxZoom: 12, maxNativeZoom: 13 }).addTo(map);
+  if (on) labelL = L.tileLayer(LABELS, { pane: 'lbl', maxZoom: 12, maxNativeZoom: 13, crossOrigin: true }).addTo(map);
 }
 function fit() {
   var p = cur, b = p.view ? null : (p.world ? [[-52, -165], [72, 175]] : [[6.5, 67.5], [36.8, 97.8]]);
@@ -353,6 +354,33 @@ function focusOn(it, zoomIn) {
   var z = Math.max(map.getZoom(), zoomIn ? (cur.world ? 4 : 6.5) : 0);
   if (z > map.getZoom() || !map.getBounds().pad(-0.15).contains(it.a)) map.flyTo(it.a, z, { duration: 0.6 });
 }
+/* ---------------- offline cache: service worker + India/Asia tile pack ---------------- */
+var swReady = null, packTimer = null, packing = {};
+if ('serviceWorker' in navigator && /^https:|^http:\/\/(localhost|127\.0\.0\.1)/.test(location.href)) {
+  swReady = navigator.serviceWorker.register('sw.js').then(function () { return navigator.serviceWorker.ready; }).catch(function () { return null; });
+  navigator.serviceWorker.addEventListener('message', function (e) {
+    var d = e.data || {}; if (d.type !== 'pack') return;
+    var el = $('#pack'); if (!el) return;
+    if (!d.fin) { el.className = 'on'; el.textContent = '⬇ ভারত ও এশিয়ার ম্যাপ অফলাইনে রাখা হচ্ছে… ' + Math.round(d.done / d.total * 100) + '%'; return; }
+    packing[d.base] = false;
+    if (d.fail < d.total * 0.05) store.set('pack.' + d.base, Date.now());
+    el.className = 'on done'; el.textContent = d.fail < d.total * 0.05 ? '✓ ভারত ও এশিয়ার ম্যাপ এই ব্রাউজারে সংরক্ষিত — এবার দ্রুত খুলবে' : 'কিছু টাইল নামানো যায়নি — পরে আবার চেষ্টা হবে';
+    setTimeout(function () { el.className = ''; }, 4000);
+  });
+}
+function packSoon(k) {   // after the page settles, quietly download the India + Asia tiles of this basemap once (~4 MB)
+  if (!swReady || !BASES[k] || !BASES[k][1] || packing[k] || navigator.onLine === false) return;
+  var last = store.get('pack.' + k, 0); if (last && Date.now() - last < 30 * 864e5) return;   // refresh monthly
+  if (navigator.connection && navigator.connection.saveData) return;
+  clearTimeout(packTimer);
+  packTimer = setTimeout(function () {
+    swReady.then(function (reg) {
+      if (!reg || !reg.active) return; packing[k] = true;
+      reg.active.postMessage({ type: 'pack', base: k, tpl: BASES[k][1].replace('{s}', 'a'), max: Math.min(7, BASES[k][2].maxNativeZoom || 7) });
+    });
+  }, 4000);
+}
+
 /* ---------------- boundaries (user-styled) ---------------- */
 var BDEF = { st: { on: true, c: '#7a5c45', w: 1, o: 0.8, d: 'dash' }, in: { on: true, c: '#8e2a4a', w: 1.6, o: 0.9, d: 'solid' } };
 var bst = (function () { var s = store.get('bstyle', null) || {}; return { st: Object.assign({}, BDEF.st, s.st), in: Object.assign({}, BDEF.in, s.in), esri: !!s.esri }; })();
@@ -471,12 +499,11 @@ function refPrep(key) {
     });
     return (REF.states = out.sort(function (a, b) { return b.area - a.area; }));
   });
-  return loadRemote('cshapes').then(function (d) {   // [name, total area (deg²), largest outer ring]
+  return loadRemote('clabels').then(function (d) {   // [name, total area (deg²), label lat, label lng] — label points precomputed (pole of inaccessibility)
     var out = [];
     d.forEach(function (f) {
       var nm = f[0], ar = f[1]; if (!nm || nm === 'Antarctica') return;
-      var c = nm === 'India' ? [79, 23.2] : polylabel([f[2]]);
-      out.push({ n: nm, a: L.latLng(c[1], c[0]), z: ar > 300 ? 2 : ar > 60 ? 3 : ar > 12 ? 4 : ar > 2 ? 5 : ar > 0.3 ? 6 : 7.5, area: ar });
+      out.push({ n: nm, a: L.latLng(f[2], f[3]), z: ar > 300 ? 2 : ar > 60 ? 3 : ar > 12 ? 4 : ar > 2 ? 5 : ar > 0.3 ? 6 : 7.5, area: ar });
     });
     return (REF.countries = out.sort(function (a, b) { return b.area - a.area; }));
   });
