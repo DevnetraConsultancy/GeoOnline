@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GeoOnline — UPSC Map Atlas</title>
+<link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<meta name="theme-color" content="#0d2428">
+<link rel="stylesheet" href="vendor/fonts/fonts.css">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.min.css">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="home">
+<aside id="side">
+  <a class="brand" href="#/">
+    <img class="logo" src="assets/logo.svg" alt="">
+    <span><b>GeoOnline</b><small>UPSC ম্যাপ অ্যাটলাস</small></span>
+  </a>
+  <button id="sideClose" aria-label="মেনু বন্ধ করো">✕</button>
+  <div class="gsearch">
+    <input id="gq" type="search" placeholder="যেকোনো জায়গা খোঁজো… (e.g. Zoji La)" autocomplete="off">
+    <div id="gres"></div>
+  </div>
+  <nav id="nav"></nav>
+  <footer class="sfoot">মানচিত্রের সীমানা কেবল পড়াশোনার জন্য — সরকারি নথি নয়।</footer>
+</aside>
+
+<div id="scrim" aria-hidden="true"></div>
+<main id="main">
+  <header id="top">
+    <button id="burger" aria-label="menu">☰</button>
+    <div class="ttl"><h1 id="ptitle">GeoOnline</h1><small id="psub"></small></div>
+    <div class="modes">
+      <button id="mStudy" class="on">📖 পড়ো</button>
+      <button id="mQuiz">🎯 কুইজ</button>
+    </div>
+    <div class="tools">
+      <label class="tg"><input type="checkbox" id="tNames" checked><span>নাম</span></label>
+      <label class="tg" title="দেশ ও রাজ্যের নাম, সমুদ্র"><input type="checkbox" id="tAdmin" checked><span>দেশ/রাজ্য</span></label>
+      <label class="tg" title="শহর ও নগর"><input type="checkbox" id="tCities"><span>শহর</span></label>
+      <div class="bwrap"><button id="bBtn" type="button" title="সীমানার রং, বেধ ও ধরন">⚙ সীমানা</button><div id="bPop" class="bpop"></div></div>
+      <select id="bsel" title="Basemap"></select>
+    </div>
+  </header>
+  <div id="stage">
+    <div id="map"></div>
+    <section id="panel"></section>
+    <div id="home"></div>
+  </div>
+</main>
+
+<script src="vendor/leaflet/leaflet.min.js"></script>
+<script src="js/core.js"></script>
+<script src="data/base.js"></script>
+<script src="data/state-facts.js"></script>
+<script src="data/in-phy.js"></script>
+<script src="data/in-env.js"></script>
+<script src="data/in-eco.js"></script>
+<script src="data/w-phy.js"></script>
+<script src="data/w-oce.js"></script>
+<script src="data/in-more.js"></script>
+<script src="data/w-more.js"></script>
+<script src="data/cul-arch.js"></script>
+<script src="data/cul-arts.js"></script>
+<script src="data/his-maps.js"></script>
+<script src="data/his-pre.js"></script>
+<script src="data/his-med.js"></script>
+<script src="data/his-mod.js"></script>
+<script src="data/his-world.js"></script>
+<script src="data/bk-darshan.js"></script>
+<script src="data/bk-ancient.js"></script>
+<script src="data/bk-medieval.js"></script>
+<script src="data/bk-modern.js"></script>
+<script src="data/bk-west.js"></script>
+<script src="data/bk-asia-sci.js"></script>
+<script src="data/census.js"></script>
+<script src="data/in-disputes.js"></script>
+<script src="data/thematic.js"></script>
+<script src="data/ir-india.js"></script>
+<script src="data/ir-groups.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
