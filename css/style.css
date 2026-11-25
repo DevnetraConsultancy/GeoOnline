@@ -278,3 +278,6 @@ body.dark .nm.adm{color:#fff}
   #bBtn{padding:4px 8px;font-size:12px}
   #bsel{max-width:118px;padding:4px 6px;font-size:12px;margin-left:auto}
 }
+.sfoot .copy{display:block;margin-top:4px;color:#b9d2cd;font-weight:600;letter-spacing:.02em}
+.hfoot .copy{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);color:var(--ink);font-size:13px}
+.hfoot .copy a{color:var(--ver)}

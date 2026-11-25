@@ -782,7 +782,7 @@ function renderHome() {
     if (g[3] !== lastSub) { lastSub = g[3]; var S = SUBJECTS.filter(function (s) { return s[0] === g[3]; })[0]; if (S) h += '<div class="hsubj"><h2>' + S[1] + '</h2><small>' + S[2] + '</small></div>'; }
     h += '<div class="hsec"><h3>' + g[1] + '<small>' + g[2] + '</small></h3><div class="cards">' + ps.map(function (p) { return '<a href="#/' + p.id + '"><span class="ct">' + countOf(p) + '</span><span class="ic">' + (p.icon || '•') + '</span><b>' + esc(p.title) + '</b><small>' + esc(p.bn || '') + '</small><br><span class="qz" data-quiz="' + p.id + '">🎯 কুইজ খেলো →</span></a>'; }).join('') + '</div></div>';
   });
-  h += '<div class="hfoot">বেসম্যাপ ও লেবেল: Esri · নদীর রেখা ও দেশের সীমানা: Natural Earth (public domain)। ঐতিহাসিক সাম্রাজ্যের সীমানা: historical-basemaps, A. Ourednik (GPL-3.0) — আনুমানিক। বেসম্যাপে দেখানো আন্তর্জাতিক সীমানা সরবরাহকারীর নিজস্ব — ভারতের সরকারি মানচিত্রের সঙ্গে মিলিয়ে নিও। অবস্থানগুলো পড়াশোনার সুবিধার জন্য চিহ্নিত; পরীক্ষার আগে NCERT / অ্যাটলাসের সঙ্গে মিলিয়ে নেওয়া ভালো।</div>';
+  h += '<div class="hfoot">বেসম্যাপ ও লেবেল: Esri · নদীর রেখা ও দেশের সীমানা: Natural Earth (public domain)। ঐতিহাসিক সাম্রাজ্যের সীমানা: historical-basemaps, A. Ourednik (GPL-3.0) — আনুমানিক। বেসম্যাপে দেখানো আন্তর্জাতিক সীমানা সরবরাহকারীর নিজস্ব — ভারতের সরকারি মানচিত্রের সঙ্গে মিলিয়ে নিও। অবস্থানগুলো পড়াশোনার সুবিধার জন্য চিহ্নিত; পরীক্ষার আগে NCERT / অ্যাটলাসের সঙ্গে মিলিয়ে নেওয়া ভালো।<div class="copy">© 2026 <b>Devnetra Consultancy</b> · <a href="https://github.com/DevnetraConsultancy/GeoOnline" target="_blank" rel="noopener">MIT License</a></div></div>';
   $('#home').innerHTML = h; $('#ptitle').textContent = 'GeoOnline'; $('#psub').textContent = 'UPSC ম্যাপ অ্যাটলাস ও কুইজ';
 }
 function go() {

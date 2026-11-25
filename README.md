@@ -49,6 +49,10 @@ data/geo/*.js     bundled boundaries, rivers, cities, historical maps
 vendor/           Leaflet 1.9.4 + fonts (local copies)
 ```
 
+## Licence
+
+Code © 2026 **Devnetra Consultancy**, released under the [MIT License](LICENSE). Bundled third-party data keeps its own licence (see below and LICENSE).
+
 ## Data & credits
 
 - Basemap tiles: © Esri and its data providers (online only).
