@@ -1,8 +1,8 @@
 /* GeoOnline service worker — © 2026 Devnetra Consultancy, MIT License
-   - app shell + data: served from cache instantly, refreshed in the background (stale-while-revalidate)
+   - app shell + data: network first (always the latest deploy), cached copy when offline
    - map tiles (Esri): cache-first, so India/Asia tiles downloaded once never wait on the network again
    - "pack" message: pre-downloads the India + Asia tile set for one basemap */
-const VER = 'v3';
+const VER = 'v4';
 const APP = 'geo-app-' + VER, TILES = 'geo-tiles-v1', TILE_MAX = 6000;
 const CORE_GEO = ['data/geo/states.js', 'data/geo/borders.js', 'data/geo/clabels.js', 'data/geo/cities.js'];
 
@@ -38,19 +38,19 @@ async function tileFirst(req) {
   if (res.ok && res.type !== 'opaque') { c.put(req.url, res.clone()); if (++puts % 200 === 0) trimTiles(); }
   return res;
 }
-async function appSWR(e) {
-  const c = await caches.open(APP), req = e.request;
-  const key = req.mode === 'navigate' ? './' : req;
-  const hit = await c.match(key, { ignoreSearch: true });
-  const net = fetch(req).then(res => { if (res.ok && res.type === 'basic') c.put(key, res.clone()); return res; }).catch(() => null);
-  if (hit) { e.waitUntil(net); return hit; }
-  return (await net) || new Response('offline', { status: 503 });
+async function appNet(e) {   // network first (fresh after every deploy), cache when offline or slow (> 4 s)
+  const c = await caches.open(APP), req = e.request, key = req.mode === 'navigate' ? './' : req;
+  const net = fetch(req).then(res => { if (res.ok && res.type === 'basic') c.put(key, res.clone()); return res; });
+  net.catch(() => {});
+  const slow = new Promise(r => setTimeout(r, 4000)).then(() => c.match(key, { ignoreSearch: true }));
+  try { return (await Promise.race([net, slow])) || await net; }
+  catch (er) { return (await c.match(key, { ignoreSearch: true })) || new Response('offline', { status: 503 }); }
 }
 self.addEventListener('fetch', e => {
   const req = e.request; if (req.method !== 'GET') return;
   const u = req.url;
   if (isTile(u)) { e.respondWith(tileFirst(req).catch(() => fetch(req))); return; }
-  if (new URL(u).origin === self.location.origin) e.respondWith(appSWR(e));
+  if (new URL(u).origin === self.location.origin) e.respondWith(appNet(e));
 });
 
 // ---- offline tile pack: India (z3–7) + Asia (z3–5) for one basemap ----
