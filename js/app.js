@@ -861,8 +861,8 @@ function buildNav() {
 function syncAll() {   // one ＋/− toggle at the top of the sidebar: − when every heading is open
   var b = $('#navAll'); if (!b) return;
   var open = !$('#nav').querySelector('.sgrp.shut, .grp.shut');
-  b.textContent = open ? '−' : '＋'; b.dataset.on = open ? '1' : '0';
-  b.title = open ? 'সব বন্ধ করো' : 'সব খোলো'; b.setAttribute('aria-label', b.title);
+  var ic = '<svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" aria-hidden="true"><path d="M5.5 2.5h7a1 1 0 0 1 1 1v7"/><rect x="2.5" y="5.5" width="8" height="8" rx="1"/><path d="M4.5 9.5h4"/>' + (open ? '' : '<path d="M6.5 7.5v4"/>') + '</svg>'; b.innerHTML = ic; b.dataset.on = open ? '1' : '0';
+  b.title = open ? 'সব বন্ধ করো (Collapse all)' : 'সব খোলো (Expand all)'; b.setAttribute('aria-label', b.title);
 }
 function renderHome() {
   var pages = GEO.pages.filter(function (p) { return p.group !== 'mix'; }), tot = pages.reduce(function (s, p) { return s + (Number(countOf(p)) || 0); }, 0);
