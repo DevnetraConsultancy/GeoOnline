@@ -855,7 +855,14 @@ function buildNav() {
     }).join('') + '</div></div>';
   });
   if (lastSub) h += '</div>';
-  $('#nav').innerHTML = '<div class="navall"><button data-all="1">＋ সব খোলো</button><button data-all="0">− সব বন্ধ</button></div>' + h;
+  $('#nav').innerHTML = h;
+  syncAll();
+}
+function syncAll() {   // one ＋/− toggle at the top of the sidebar: − when every heading is open
+  var b = $('#navAll'); if (!b) return;
+  var open = !$('#nav').querySelector('.sgrp.shut, .grp.shut');
+  b.textContent = open ? '−' : '＋'; b.dataset.on = open ? '1' : '0';
+  b.title = open ? 'সব বন্ধ করো' : 'সব খোলো'; b.setAttribute('aria-label', b.title);
 }
 function renderHome() {
   var pages = GEO.pages.filter(function (p) { return p.group !== 'mix'; }), tot = pages.reduce(function (s, p) { return s + (Number(countOf(p)) || 0); }, 0);
@@ -965,9 +972,12 @@ document.addEventListener('keydown', function (e) {
   if (Q.lock && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); quizNext(); }
   else if (!Q.lock && (Q.kind === 'name' || Q.kind === 'order' || Q.kind === 'book' || Q.kind === 'old') && e.key >= '1' && e.key <= '4') { var b = panel.querySelectorAll('.opts button')[+e.key - 1]; if (b) b.click(); }
 });
+$('#navAll').addEventListener('click', function () {
+  var on = this.dataset.on !== '1', o = {}, so = {};
+  GROUPS.forEach(function (g) { o[g[0]] = on; so[g[3]] = on; }); store.set('open', o); store.set('subjOpen', so); buildNav();
+});
+$('#nav').addEventListener('click', function () { setTimeout(syncAll, 0); });
 $('#nav').addEventListener('click', function (e) {
-  var all = e.target.closest('[data-all]');
-  if (all) { var on = all.dataset.all === '1', o = {}, so = {}; GROUPS.forEach(function (g) { o[g[0]] = on; so[g[3]] = on; }); store.set('open', o); store.set('subjOpen', so); buildNav(); return; }
   var sb = e.target.closest('.sgrp>.subj');
   if (sb) { var sg = sb.parentNode, so2 = store.get('subjOpen', {}), shut = sg.classList.toggle('shut'); so2[sg.dataset.s] = !shut; store.set('subjOpen', so2); sb.querySelector('i').textContent = shut ? '＋' : '−'; return; }
   var b = e.target.closest('.grp>button'); if (!b) return; var g = b.parentNode, s = store.get('open', {}), sh = g.classList.toggle('shut'); s[g.dataset.g] = !sh; store.set('open', s); b.querySelector('i').textContent = sh ? '＋' : '−';
