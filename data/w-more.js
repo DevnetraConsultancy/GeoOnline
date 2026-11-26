@@ -25,7 +25,7 @@ GEO.add({
   ['Haboob',15.6,32.5,'Sudan (also Arizona)','Intense wall-like dust storm driven by thunderstorm outflow.','hot'],
   ['Karaburan',39.0,83.0,'Tarim Basin, China','"Black storm": hot dusty NE wind over the Taklamakan in spring–summer.','hot'],
   ['Sukhovey',47.5,40.0,'Russian & Ukrainian steppe','Hot dry summer wind of the steppe that damages wheat.','hot'],
-  ['Zonda',32.9,-68.8,'Argentina (Mendoza)','Warm dry foehn-type wind on the east slopes of the Andes.','hot'],
+  ['Zonda',-32.9,-68.8,'Argentina (Mendoza)','Warm dry foehn-type wind on the east slopes of the Andes.','hot'],
   ['Santa Ana',33.8,-117.6,'Southern California','Hot dry offshore autumn wind; fuels California wildfires.','hot'],
   ['Brickfielder',-36.5,144.0,'SE Australia (Victoria)','Hot dry dusty wind from the interior deserts of Australia in summer.','hot'],
   ['Berg Wind',-31.0,18.0,'South Africa (west coast)','Hot dry offshore wind descending from the interior plateau.','hot'],

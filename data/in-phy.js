@@ -118,7 +118,7 @@ GEO.add({
  types:{lad:['Ladakh / J&K / PoK','#8e44ad'], hp:['Himachal Pradesh','#e4572e'], uk:['Uttarakhand','#d68910'], sk:['Sikkim','#c2185b'], ne:['Arunachal / North-East','#16a085'], pen:['Peninsular & Aravalli','#2e86ab']},
  pts:[
   ['Karakoram Pass',35.513,77.823,'Ladakh – Xinjiang','5,540 m; on ancient Leh–Yarkand caravan route; north of Daulat Beg Oldi.','lad'],
-  ['Aghil Pass',36.18,76.63,'Ladakh (PoK) – Xinjiang','North of K2 in the Karakoram; leads to Shaksgam valley (ceded by Pakistan to China, 1963).','lad'],
+  ['Aghil Pass',36.18,76.63,'Ladakh (Shaksgam, China-held) – Xinjiang','North of K2 in the Karakoram; leads to Shaksgam valley (ceded by Pakistan to China, 1963).','lad'],
   ['Khunjerab Pass',36.85,75.43,'Gilgit-Baltistan (PoK) – China','Karakoram Highway / CPEC crosses here; one of the highest paved border crossings.','lad'],
   ['Mintaka Pass',37.0,74.85,'Gilgit-Baltistan (PoK) – China','Near the India–China–Afghanistan trijunction; old Silk Route pass in Karakoram.','lad'],
   ['Sasser La',35.04,77.63,'Ladakh','Saser Muztagh; on the old route from Nubra valley to Shyok and Karakoram Pass (DBO).','lad'],

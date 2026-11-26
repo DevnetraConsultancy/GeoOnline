@@ -76,7 +76,7 @@ GEO.add({
   ['Panchet Dam',23.68,86.75,'Jharkhand / West Bengal','River: Damodar. Damodar Valley Corporation dam.','pen'],
   ['Tilaiya Dam',24.32,85.52,'Jharkhand','River: Barakar (Koderma). First dam of the Damodar Valley Corporation (1953).','pen'],
   ['Teesta-III (Chungthang) Dam',27.60,88.65,'Sikkim','River: Teesta. 1200 MW project; dam washed away by South Lhonak GLOF, October 2023.','him'],
-  ['Subansiri Lower Project',27.553,94.259,'Arunachal Pradesh / Assam','River: Subansiri at Gerukamukh. 2000 MW — India\'s largest hydro project under completion.','him'],
+  ['Subansiri Lower Project',27.553,94.259,'Arunachal Pradesh / Assam','River: Subansiri at Gerukamukh. 2000 MW — India\'s largest hydro project; first units commissioned 2025–26, rest due by end-2026.','him'],
   ['Umiam (Barapani) Dam',25.66,91.89,'Meghalaya','River: Umiam, north of Shillong; first hydel project of the North-East region.','him'],
   ['Dumbur Dam',23.43,91.82,'Tripura','River: Gumti. Dumbur lake; displaced tribal population.','him'],
   ['Tipaimukh Dam (proposed)',24.23,93.02,'Manipur','River: Barak at Tuivai confluence. Proposed project; objections from Bangladesh and locals.','him']
@@ -542,7 +542,7 @@ GEO.add({
  pts:[
   ['Rice — Godavari–Krishna Delta',16.70,81.50,'Andhra Pradesh','"Rice bowl of Andhra Pradesh"; canal irrigated deltas.','rice'],
   ['Rice — Thanjavur (Kaveri Delta)',10.79,79.14,'Tamil Nadu','"Rice bowl of Tamil Nadu"; Kuruvai, Samba, Thaladi seasons.','rice'],
-  ['Rice — Bardhaman',23.23,87.86,'West Bengal','"Rice bowl of West Bengal"; West Bengal is the largest rice producer (Aus, Aman, Boro).','rice'],
+  ['Rice — Bardhaman',23.23,87.86,'West Bengal','"Rice bowl of West Bengal"; West Bengal is among the top rice-producing states (Aus, Aman, Boro).','rice'],
   ['Rice — Chhattisgarh Plain (Raipur)',21.25,81.63,'Chhattisgarh','"Rice bowl of Central India"; Mahanadi basin.','rice'],
   ['Rice — Kuttanad',9.40,76.45,'Kerala','Below-sea-level paddy farming; FAO Globally Important Agricultural Heritage System.','rice'],
   ['Basmati Rice — Karnal',29.69,76.99,'Haryana','Basmati belt of Haryana–Punjab; ICAR Central Soil Salinity Research Institute.','rice'],

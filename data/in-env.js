@@ -215,7 +215,7 @@ GEO.add({
   ['Kanjli Wetland',31.42,75.38,'Punjab','Kapurthala; on Kali Bein rivulet'],
   ['Ropar Wetland',31.02,76.50,'Punjab','Man-made wetland on Sutlej river'],
   ['Pong Dam Lake',32.02,76.05,'Himachal Pradesh','Maharana Pratap Sagar on Beas river, Kangra; bar-headed geese'],
-  ['Renuka Lake',30.61,77.46,'Himachal Pradesh','Sirmaur; smallest Ramsar site of India'],
+  ['Renuka Lake',30.61,77.46,'Himachal Pradesh','Sirmaur; joint-smallest Ramsar site of India (~20 ha, tied with Vembannur)'],
   ['Chandertal',32.48,77.61,'Himachal Pradesh','High-altitude lake in Lahaul–Spiti near Kunzum pass; source area of Chandra river'],
   ['Surinsar–Mansar Lakes',32.72,75.12,'Jammu & Kashmir','Twin freshwater lakes near Jammu'],
   ['Hokera Wetland',34.10,74.71,'Jammu & Kashmir','Near Srinagar; Jhelum basin; reed beds; wintering waterfowl'],

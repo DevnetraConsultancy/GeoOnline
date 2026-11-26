@@ -72,7 +72,7 @@ GEO.add({
   ['Chhau — Mayurbhanj',21.934,86.733,'Odisha','Mayurbhanj style (Baripada): no masks, martial movements; part of UNESCO-listed Chhau.','east'],
   ['Danda Nata',19.31,84.79,'Odisha','Ganjam ritual dance-drama of Chaitra; devotion to Shiva & Shakti with self-mortification.','east'],
   ['Bihu',26.98,94.64,'Assam','(state-wide) Rongali Bihu (April) dance of youth with dhol, pepa (buffalo-horn pipe) and gogona; upper Assam heartland.','ne'],
-  ['Bagurumba',26.40,90.27,'Assam','Bodo "butterfly dance" of women at Bwisagu; Guinness record 2023 (Guwahati).','ne'],
+  ['Bagurumba',26.40,90.27,'Assam','Bodo "butterfly dance" of women at Bwisagu; "Bagurumba Dwhou" mass performance by 10,000+ dancers, Sarusajai (Guwahati), 17 Jan 2026.','ne'],
   ['Jhumur (Tea tribes)',27.48,94.91,'Assam','Dance of tea-garden (Adivasi) communities with madal and flute.','ne'],
   ['Cheraw',23.727,92.718,'Mizoram','Bamboo dance — dancers step between clapping bamboo poles; oldest Mizo dance.','ne'],
   ['Wangala',25.514,90.22,'Meghalaya','Garo "100 drums" harvest dance honouring Saljong (sun god); held near Tura.','ne'],
@@ -268,7 +268,7 @@ GEO.add({
  intro:'যেখানে উৎসব হয় ঠিক সেখানেই পিন — কুম্ভ, পুষ্কর, হর্নবিল থেকে নৃত্য-উৎসব পর্যন্ত। UNESCO তালিকাভুক্তগুলো নোটে লেখা।',
  types:{fair:['Fair / Mela','#f08a24'], relig:['Religious Festival','#d1495b'], tribal:['Tribal & Harvest','#1f9d7a'], music:['Music / Dance Festival','#7b2cbf']},
  pts:[
-  ['Kumbh Mela — Prayagraj',25.43,81.885,'Uttar Pradesh','At the Triveni Sangam; Maha Kumbh every 144 yrs (2025); Kumbh is UNESCO ICH 2017.','fair'],
+  ['Kumbh Mela — Prayagraj',25.43,81.885,'Uttar Pradesh','At the Triveni Sangam; 2025 Maha Kumbh billed as a once-in-144-years event; Kumbh is UNESCO ICH 2017.','fair'],
   ['Kumbh Mela — Haridwar',29.945,78.164,'Uttarakhand','On the Ganga at Har ki Pauri; Jupiter in Aquarius.','fair'],
   ['Kumbh Mela — Nashik–Trimbakeshwar',19.998,73.79,'Maharashtra','Simhastha Kumbh on the Godavari.','fair'],
   ['Simhastha Kumbh — Ujjain',23.179,75.784,'Madhya Pradesh','On the Shipra; Jupiter in Leo.','fair'],
