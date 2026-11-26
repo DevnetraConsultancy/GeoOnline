@@ -583,7 +583,7 @@ function drawExtent() {
 function extHtml() {
   var E = extList(); if (!E) return '';
   var i = extIndex();
-  return '<div class="ext"><div class="exth"><b>🗺 সাম্রাজ্যের বিস্তার</b><small>রঙিন অংশ = সেই সময়ের আনুমানিক এলাকা</small></div>' + E.map(function (e, k) {
+  return '<div class="ext"><div class="exth"><small>রঙিন অংশ = সেই সময়ের আনুমানিক এলাকা</small></div>' + E.map(function (e, k) {
     return '<button data-act="ext" data-i="' + k + '"' + (k === i ? ' class="on"' : '') + '><span class="sw">' + e.parts.map(function (x) { return '<i style="background:' + x[1] + '"></i>'; }).join('') + '</span>' + esc(e.label) +
       (k === i && e.parts.length > 1 ? '<small>' + e.parts.map(function (x) { return '<em style="color:' + x[1] + '">■</em> ' + esc(x[0]); }).join(' · ') + '</small>' : '') + '</button>';
   }).join('') + '<button data-act="ext" data-i="-1"' + (i < 0 ? ' class="on"' : '') + '>✕ রঙ বন্ধ</button><p class="extsrc">সীমানা: historical-basemaps (GPL-3.0) — আনুমানিক, পরীক্ষার আগে NCERT অ্যাটলাস মিলিয়ে নিও।</p></div>';
@@ -597,23 +597,34 @@ function oldClue(it) {   // old names only — strip eras in brackets, "→ new 
   return o.length > 2 ? o : '';
 }
 function nBooks(it) { return it.dt && it.dt.books ? it.dt.books.length : 0; }
+var MEDIA = null, mediaBusy = false;
+function mediaOf(it) { return MEDIA && it && it.p ? MEDIA[it.p.id + '|' + it.n] : null; }   // [wikipedia title, image file or '', credit]
+function loadMedia() {
+  if (MEDIA || mediaBusy) return; mediaBusy = true;
+  loadRemote('media').then(function (d) { MEDIA = d || {}; if (sel && $('#dcard')) showDetail(sel); }).catch(function () { MEDIA = {}; });
+}
 function detailHtml(it, open) {
-  var D = it.dt; if (!D) return '';
+  var D = it.dt || {}, M = mediaOf(it), ty = it.p.types && it.p.types[it.t] ? it.p.types[it.t][0] : '';
   var h = '<div class="dcard" id="dcard"><button class="dx" data-act="dclose" aria-label="বন্ধ">✕</button><h4>' + esc(it.n) + '</h4>' +
-    '<div class="dmeta">' + [D.era, D.place || it.s].filter(Boolean).map(esc).join(' · ') + '</div>';
-  if (D.old) h += '<p class="dold"><b>পুরনো / অন্য নাম:</b> ' + esc(D.old) + '</p>';
+    '<div class="dmeta">' + [D.era, D.place || it.s, ty].filter(Boolean).map(esc).join(' · ') + '</div>';
+  if (M && M[1]) h += '<figure class="dimg"><img src="assets/img/' + esc(M[1]) + '" alt="' + esc(it.n) + '" loading="lazy" onerror="this.parentNode.remove()">' + (M[2] ? '<figcaption>' + esc(M[2]) + '</figcaption>' : '') + '</figure>';
+  if (it.d) h += '<p class="dnote">' + esc(it.d) + '</p>';
+  if (D.old) h += '<p class="dold"><b>পুরনো / অন্য নাম</b>' + esc(D.old) + '</p>';
   if (D.idea) h += '<p class="didea"><b>মূল ভাবনা</b>' + esc(D.idea) + '</p>';
   if (D.more) h += '<p class="dmore">' + esc(D.more) + '</p>';
+  if (it.x) h += '<p class="dfacts">' + it.x.map(esc).join('<br>') + '</p>';
   if (D.books && D.books.length) {
     h += '<h5>📚 বই ও গ্রন্থ <small>' + D.books.length + 'টি — বইয়ে ক্লিক করো</small></h5>' + D.books.map(function (b, i) {
       return '<details class="book"' + (open === i ? ' open' : '') + ' data-b="' + i + '"><summary><b>' + esc(b.t) + '</b><span>' + [b.y, b.lang].filter(Boolean).map(esc).join(' · ') + '</span></summary>' +
         (b.sum ? '<p>' + esc(b.sum) + '</p>' : '') + (b.key ? '<p class="bkey">🔑 ' + esc(b.key) + '</p>' : '') + '</details>';
     }).join('');
   }
+  if (M && M[0]) h += '<a class="dwiki" href="https://en.wikipedia.org/wiki/' + encodeURIComponent(M[0].replace(/ /g, '_')) + '" target="_blank" rel="noopener">📖 Wikipedia: ' + esc(M[0]) + ' ↗</a>';
   return h + '</div>';
 }
 function showDetail(it, open) {
-  if (mode !== 'study' || !it || !it.dt) return;
+  if (mode !== 'study' || !it) return;
+  loadMedia();
   var old = $('#dcard'); if (old) old.remove();
   panel.insertAdjacentHTML('afterbegin', detailHtml(it, open)); panel.scrollTop = 0;
   if (open != null) { var d = panel.querySelector('details.book[data-b="' + open + '"]'); if (d) setTimeout(function () { d.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 30); }
@@ -624,17 +635,13 @@ function select(it, fly) {
   tmpG.clearLayers(); sel = it;
   ring(it, '#ffc53d');
   var D = it.dt, extra = '';
-  if (D) {
-    if (D.era) extra += '<span class="pera">' + esc(D.era) + '</span>';
-    if (D.old) extra += '<span class="pold">পুরনো নাম: ' + esc(D.old) + '</span>';
-    if (D.books && D.books.length) extra += '<div class="pbooks">' + D.books.map(function (b, i) { return '<a href="#" data-pb="' + i + '">📖 ' + esc(b.t) + (b.y ? ' <em>' + esc(b.y) + '</em>' : '') + '</a>'; }).join('') + '</div>';
-    else if (D.more) extra += '<a href="#" class="pmore" data-pb="-1">বিস্তারিত পড়ো →</a>';
-  }
-  L.popup({ offset: [0, -6], autoPan: !fly, maxWidth: 300 }).setLatLng(it.a).setContent('<b>' + esc(it.n) + '</b><small>' + esc(it.s) + (it.p.types && it.p.types[it.t] ? ' · ' + esc(it.p.types[it.t][0]) : '') + '</small>' + esc(it.d) + extra + factsHtml(it)).openOn(map);
+  if (D && D.books && D.books.length) extra += '<div class="pbooks">' + D.books.map(function (b, i) { return '<a href="#" data-pb="' + i + '">📖 ' + esc(b.t) + (b.y ? ' <em>' + esc(b.y) + '</em>' : '') + '</a>'; }).join('') + '</div>';
+  L.popup({ offset: [0, -6], autoPan: !fly, maxWidth: 280 }).setLatLng(it.a).setContent('<b>' + esc(it.n) + '</b><small>' + esc(it.s) + (D && D.era ? ' · ' + esc(D.era) : '') + '</small>' + extra + '<span class="pside">📄 বিস্তারিত পাশের প্যানেলে</span>').openOn(map);
   showDetail(it);
   if (fly) focusOn(it, true);
   drawNames();
-  var rows = panel.querySelectorAll('.row'); for (var i = 0; i < rows.length; i++) { var on = +rows[i].dataset.i === it.i; rows[i].classList.toggle('on', on); if (on && !fly) rows[i].scrollIntoView({ block: 'nearest' }); }
+  var rows = panel.querySelectorAll('.row'); for (var i = 0; i < rows.length; i++) rows[i].classList.toggle('on', +rows[i].dataset.i === it.i);
+  panel.scrollTop = 0;
 }
 function fillList(q) {
   var Lst = $('#list'); if (!Lst) return; q = (q || '').toLowerCase();
@@ -645,9 +652,14 @@ function chipsHtml() {
   var p = cur; if (!p.types) return '';
   return '<div class="chips">' + Object.keys(p.types).map(function (k) { var n = p.items.filter(function (i) { return i.t === k; }).length; return n ? '<button class="chip' + (hidden[k] ? ' off' : '') + '" data-act="chip" data-t="' + k + '"><i style="background:' + p.types[k][1] + '"></i>' + esc(p.types[k][0]) + ' <b>' + n + '</b></button>' : ''; }).join('') + '</div>';
 }
+function fold(key, title, body, defOpen) {   // a section with a ＋/− header; state remembered per section kind
+  var st = store.get('fold', {}), open = st[key] == null ? defOpen !== false : st[key];
+  return '<section class="fold' + (open ? '' : ' shut') + '" data-fold="' + key + '"><button class="fh" data-act="fold"><span>' + title + '</span><i>' + (open ? '−' : '＋') + '</i></button><div class="fb">' + body + '</div></section>';
+}
 function renderPanel() {
   if (mode === 'quiz') { if (Q) quizPanel(); else quizSetup(); return; }
-  panel.innerHTML = '<p class="intro">' + esc(cur.intro || '') + '</p>' + extHtml() + chipsHtml() +
+  var ex = extHtml(), ch = chipsHtml();
+  panel.innerHTML = fold('intro', 'ℹ পরিচিতি', '<p class="intro">' + esc(cur.intro || '') + '</p>') + (ex ? fold('ext', '🗺 সাম্রাজ্যের বিস্তার', ex) : '') + (ch ? fold('chips', '🏷 ধরন অনুযায়ী দেখাও', ch) : '') +
     '<input id="q" class="find" placeholder="এই পাতায় খোঁজো… (' + cur.items.length + 'টি)"><div id="list" class="list"></div>';
   fillList('');
   $('#q').addEventListener('input', function (e) { fillList(e.target.value); });
@@ -828,17 +840,22 @@ function setMode(m) {
   if (cur && cur.items) { render(); renderPanel(); }
 }
 function buildNav() {
-  var best = store.get('best', {}), open = store.get('open', {}), h = '', lastSub = '';
+  var best = store.get('best', {}), open = store.get('open', {}), subjOpen = store.get('subjOpen', {}), h = '', lastSub = '';
   GROUPS.forEach(function (g) {
     var ps = GEO.pages.filter(function (p) { return p.group === g[0]; }); if (!ps.length) return;
-    if (g[3] !== lastSub) { lastSub = g[3]; var S = SUBJECTS.filter(function (s) { return s[0] === g[3]; })[0]; if (S) h += '<div class="subj">' + S[1] + '</div>'; }
+    if (g[3] !== lastSub) {
+      if (lastSub) h += '</div>';
+      lastSub = g[3]; var S = SUBJECTS.filter(function (s) { return s[0] === g[3]; })[0], sOpen = subjOpen[g[3]] !== false || (cur && cur.group && GROUPS.some(function (x) { return x[0] === cur.group && x[3] === g[3]; }));
+      h += '<div class="sgrp' + (sOpen ? '' : ' shut') + '" data-s="' + g[3] + '"><button class="subj">' + (S ? S[1] : g[3]) + '<i>' + (sOpen ? '−' : '＋') + '</i></button>';
+    }
     var isOpen = open[g[0]] || (cur && cur.group === g[0]);
-    h += '<div class="grp' + (isOpen ? '' : ' shut') + '" data-g="' + g[0] + '"><button>' + g[1] + '<small>' + ps.length + '</small></button><div class="links">' + ps.map(function (p) {
+    h += '<div class="grp' + (isOpen ? '' : ' shut') + '" data-g="' + g[0] + '"><button>' + g[1] + '<small>' + ps.length + '</small><i>' + (isOpen ? '−' : '＋') + '</i></button><div class="links">' + ps.map(function (p) {
       var b = Math.max(best[p.id + ':find'] || 0, best[p.id + ':name'] || 0, best[p.id + ':pin'] || 0, best[p.id + ':book'] || 0, best[p.id + ':old'] || 0);
       return '<a href="#/' + p.id + '" data-id="' + p.id + '"' + (cur === p ? ' class="on"' : '') + '><span class="ic">' + (p.icon || '•') + '</span><span class="tx">' + esc(p.title) + '<small>' + esc(p.bn || '') + '</small></span>' + (b ? '<span class="st">★' + b + '</span>' : '') + '<span class="ct">' + countOf(p) + '</span></a>';
     }).join('') + '</div></div>';
   });
-  $('#nav').innerHTML = h;
+  if (lastSub) h += '</div>';
+  $('#nav').innerHTML = '<div class="navall"><button data-all="1">＋ সব খোলো</button><button data-all="0">− সব বন্ধ</button></div>' + h;
 }
 function renderHome() {
   var pages = GEO.pages.filter(function (p) { return p.group !== 'mix'; }), tot = pages.reduce(function (s, p) { return s + (Number(countOf(p)) || 0); }, 0);
@@ -848,7 +865,8 @@ function renderHome() {
   GROUPS.forEach(function (g) {
     var ps = GEO.pages.filter(function (p) { return p.group === g[0]; }); if (!ps.length) return;
     if (g[3] !== lastSub) { lastSub = g[3]; var S = SUBJECTS.filter(function (s) { return s[0] === g[3]; })[0]; if (S) h += '<div class="hsubj"><h2>' + S[1] + '</h2><small>' + S[2] + '</small></div>'; }
-    h += '<div class="hsec"><h3>' + g[1] + '<small>' + g[2] + '</small></h3><div class="cards">' + ps.map(function (p) { return '<a href="#/' + p.id + '"><span class="ct">' + countOf(p) + '</span><span class="ic">' + (p.icon || '•') + '</span><b>' + esc(p.title) + '</b><small>' + esc(p.bn || '') + '</small><br><span class="qz" data-quiz="' + p.id + '">🎯 কুইজ খেলো →</span></a>'; }).join('') + '</div></div>';
+    var hs = store.get('hshut', {});
+    h += '<div class="hsec' + (hs[g[0]] ? ' shut' : '') + '" data-h="' + g[0] + '"><h3><button class="hx" data-hx="' + g[0] + '">' + (hs[g[0]] ? '＋' : '−') + '</button>' + g[1] + '<small>' + g[2] + '</small></h3><div class="cards">' + ps.map(function (p) { return '<a href="#/' + p.id + '"><span class="ct">' + countOf(p) + '</span><span class="ic">' + (p.icon || '•') + '</span><b>' + esc(p.title) + '</b><small>' + esc(p.bn || '') + '</small><br><span class="qz" data-quiz="' + p.id + '">🎯 কুইজ খেলো →</span></a>'; }).join('') + '</div></div>';
   });
   h += '<div class="hfoot">বেসম্যাপ ও লেবেল: Esri · নদীর রেখা ও দেশের সীমানা: Natural Earth (public domain)। ঐতিহাসিক সাম্রাজ্যের সীমানা: historical-basemaps, A. Ourednik (GPL-3.0) — আনুমানিক। বেসম্যাপে দেখানো আন্তর্জাতিক সীমানা সরবরাহকারীর নিজস্ব — ভারতের সরকারি মানচিত্রের সঙ্গে মিলিয়ে নিও। অবস্থানগুলো পড়াশোনার সুবিধার জন্য চিহ্নিত; পরীক্ষার আগে NCERT / অ্যাটলাসের সঙ্গে মিলিয়ে নেওয়া ভালো।<div class="copy">© 2026 <b>Devnetra Consultancy</b> · <a href="https://github.com/DevnetraConsultancy/GeoOnline" target="_blank" rel="noopener">MIT License</a></div></div>';
   $('#home').innerHTML = h; $('#ptitle').textContent = 'GeoOnline'; $('#psub').textContent = 'UPSC ম্যাপ অ্যাটলাস ও কুইজ';
@@ -921,6 +939,7 @@ panel.addEventListener('click', function (e) {
   if (a === 'sel') select(cur.items[+t.dataset.i], true);
   else if (a === 'chip') { hidden[t.dataset.t] = !hidden[t.dataset.t]; sel = null; render(); renderPanel(); }
   else if (a === 'ext') { extSel[cur.id] = +t.dataset.i; drawExtent(); var ex = panel.querySelector('.ext'); if (ex) ex.outerHTML = extHtml(); }
+  else if (a === 'fold') { var sec = t.parentNode, shut = sec.classList.toggle('shut'), fs = store.get('fold', {}); fs[sec.dataset.fold] = !shut; store.set('fold', fs); t.querySelector('i').textContent = shut ? '＋' : '−'; }
   else if (a === 'dclose') { var dc = $('#dcard'); if (dc) dc.remove(); }
   else if (a === 'qn') { qCount = +t.dataset.n; quizSetup(); }
   else if (a === 'qstart') quizStart(t.dataset.kind);
@@ -946,8 +965,16 @@ document.addEventListener('keydown', function (e) {
   if (Q.lock && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); quizNext(); }
   else if (!Q.lock && (Q.kind === 'name' || Q.kind === 'order' || Q.kind === 'book' || Q.kind === 'old') && e.key >= '1' && e.key <= '4') { var b = panel.querySelectorAll('.opts button')[+e.key - 1]; if (b) b.click(); }
 });
-$('#nav').addEventListener('click', function (e) { var b = e.target.closest('.grp>button'); if (!b) return; var g = b.parentNode, s = store.get('open', {}); g.classList.toggle('shut'); s[g.dataset.g] = !g.classList.contains('shut'); store.set('open', s); });
-$('#home').addEventListener('click', function (e) { var q = e.target.closest('[data-quiz]'); if (q) { e.preventDefault(); location.hash = '#/' + q.dataset.quiz + '/quiz'; } });
+$('#nav').addEventListener('click', function (e) {
+  var all = e.target.closest('[data-all]');
+  if (all) { var on = all.dataset.all === '1', o = {}, so = {}; GROUPS.forEach(function (g) { o[g[0]] = on; so[g[3]] = on; }); store.set('open', o); store.set('subjOpen', so); buildNav(); return; }
+  var sb = e.target.closest('.sgrp>.subj');
+  if (sb) { var sg = sb.parentNode, so2 = store.get('subjOpen', {}), shut = sg.classList.toggle('shut'); so2[sg.dataset.s] = !shut; store.set('subjOpen', so2); sb.querySelector('i').textContent = shut ? '＋' : '−'; return; }
+  var b = e.target.closest('.grp>button'); if (!b) return; var g = b.parentNode, s = store.get('open', {}), sh = g.classList.toggle('shut'); s[g.dataset.g] = !sh; store.set('open', s); b.querySelector('i').textContent = sh ? '＋' : '−';
+});
+$('#home').addEventListener('click', function (e) {
+  var hx = e.target.closest('[data-hx]');
+  if (hx) { var sec = hx.closest('.hsec'), st = store.get('hshut', {}), shut = sec.classList.toggle('shut'); st[hx.dataset.hx] = shut; store.set('hshut', st); hx.textContent = shut ? '＋' : '−'; return; } var q = e.target.closest('[data-quiz]'); if (q) { e.preventDefault(); location.hash = '#/' + q.dataset.quiz + '/quiz'; } });
 $('#mStudy').onclick = function () { if (cur) setMode('study'); };
 $('#mQuiz').onclick = function () { if (cur) setMode('quiz'); };
 $('#tNames').onchange = function (e) { showNames = e.target.checked; drawNames(); };

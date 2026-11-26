@@ -37,7 +37,7 @@ button{cursor:pointer}
 .grp{margin-top:6px}
 .grp>button{width:100%;text-align:left;background:none;border:0;color:#f6c98b;padding:9px 10px 5px;font-weight:700;font-size:13px;letter-spacing:.3px;display:flex;justify-content:space-between}
 .grp>button small{color:#7fa39e;font-weight:500}
-.grp>button:after{content:'▾';margin-left:8px;color:#7fa39e;transition:transform .15s}
+.grp>button i{font-style:normal;margin-left:8px;color:#7fa39e;width:14px;text-align:center}
 .grp>button{align-items:center}.grp>button small{margin-left:auto}
 .grp.shut>button:after{transform:rotate(-90deg)}
 .grp.shut .links{display:none}
@@ -296,3 +296,29 @@ body.home #pack{display:none}
 .ext .sw{display:inline-flex;gap:2px;margin-right:7px;vertical-align:-1px}
 .ext .sw i{width:11px;height:11px;border-radius:3px;display:inline-block;opacity:.85}
 .extsrc{font-size:11px;color:var(--mute);margin:6px 2px 2px}
+
+/* ---------- ＋/− collapsible headings ---------- */
+.sgrp>.subj{display:flex;width:calc(100% - 12px);border:0;text-align:left;cursor:pointer;align-items:center;font-family:inherit}
+.sgrp>.subj i{margin-left:auto;font-style:normal;font-weight:700;color:#ffd9ad;width:16px;text-align:center}
+.sgrp.shut>.grp{display:none}
+.navall{display:flex;gap:6px;margin:2px 6px 4px}
+.navall button{flex:1;border:1px solid #24525a;background:transparent;color:#9fc0bb;border-radius:8px;padding:4px 6px;font-size:11.5px}
+.navall button:hover{color:#fff;border-color:#3d7a82}
+.fold{border-bottom:1px solid var(--paper2);margin-bottom:6px}
+.fh{display:flex;width:100%;align-items:center;border:0;background:none;padding:6px 2px;font-weight:700;font-size:13px;color:var(--ink);text-align:left}
+.fh i{margin-left:auto;font-style:normal;width:22px;height:22px;display:grid;place-items:center;border-radius:6px;background:var(--paper2);font-weight:700}
+.fold.shut>.fb{display:none}
+.fold .intro{margin-top:0}
+.hsec h3 .hx{border:1px solid var(--line);background:#fff;border-radius:7px;width:26px;height:26px;margin-right:8px;font-weight:700;color:var(--ink);flex:none}
+.hsec h3{justify-content:flex-start}.hsec h3 small{margin-left:auto}
+.hsec.shut .cards{display:none}
+
+/* ---------- detail card: image, note, Wikipedia link ---------- */
+.dimg{margin:4px 0 8px;border-radius:10px;overflow:hidden;background:var(--paper2)}
+.dimg img{display:block;width:100%;max-height:230px;object-fit:cover}
+.dimg figcaption{font-size:10.5px;color:var(--mute);padding:3px 8px;line-height:1.3}
+.dnote{font-weight:500}
+.dfacts{font-size:12.5px !important;background:var(--paper);border-radius:10px;padding:7px 10px}
+.dwiki{display:inline-block;margin-top:8px;font-size:12.5px;font-weight:600;color:#1f618d;text-decoration:none}
+.dwiki:hover{text-decoration:underline}
+.pside{display:block;margin-top:5px;font-size:11.5px;color:var(--mute)}
