@@ -1,9 +1,8 @@
-// Line / polygon pages. Real geometry is fetched at runtime (Natural Earth rivers & countries, India states 2019).
+// Line / polygon pages. Geometry is bundled in data/geo/ (Natural Earth rivers & countries; DataMeet India states, CC BY 4.0; OpenStreetMap river courses, ODbL).
 GEO.REMOTE = {
   rivers: ['https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@v5.1.2/geojson/ne_10m_rivers_lake_centerlines.geojson',
            'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_10m_rivers_lake_centerlines.geojson'],
-  states: ['https://cdn.jsdelivr.net/gh/india-in-data/india-states-2019@master/india_states.geojson',
-           'https://raw.githubusercontent.com/india-in-data/india-states-2019/master/india_states.geojson'],
+  states: [],   // bundled only: data/geo/states.js (DataMeet India, CC BY 4.0)
   countries: ['https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@v5.1.2/geojson/ne_50m_admin_0_countries.geojson',
               'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/v5.1.2/geojson/ne_50m_admin_0_countries.geojson']
 };

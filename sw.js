@@ -2,9 +2,9 @@
    - app shell + data: network first (always the latest deploy), cached copy when offline
    - map tiles (Esri): cache-first, so India/Asia tiles downloaded once never wait on the network again
    - "pack" message: pre-downloads the India + Asia tile set for one basemap */
-const VER = 'v4';
-const APP = 'geo-app-' + VER, TILES = 'geo-tiles-v1', TILE_MAX = 6000;
-const CORE_GEO = ['data/geo/states.js', 'data/geo/borders.js', 'data/geo/clabels.js', 'data/geo/cities.js'];
+const VER = 'v5';
+const APP = 'geo-app-' + VER, TILES = 'geo-tiles-v1', PACK = 'geo-pack-v1', IMGS = 'geo-img-v1', TILE_MAX = 6000, IMG_MAX = 400;
+const CORE_GEO = ['data/geo/states.js', 'data/geo/borders.js', 'data/geo/clabels.js', 'data/geo/cities.js', 'data/geo/countries.js'];   // countries = offline basemap
 
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
@@ -22,24 +22,33 @@ self.addEventListener('activate', e => {
   e.waitUntil((async () => {
     for (const k of await caches.keys()) if (k.startsWith('geo-app-') && k !== APP) await caches.delete(k);
     await self.clients.claim();
+    trimCache(TILES, TILE_MAX); trimCache(IMGS, IMG_MAX);
   })());
 });
 
 const isTile = u => /arcgisonline\.com\/ArcGIS\/rest\/services\/.+\/tile\//.test(u);
 let puts = 0;
-async function trimTiles() {
-  const c = await caches.open(TILES), ks = await c.keys();
-  for (let i = 0; i < ks.length - TILE_MAX; i++) await c.delete(ks[i]);
+async function trimCache(name, max) {   // oldest entries go first
+  const c = await caches.open(name), ks = await c.keys();
+  for (let i = 0; i < ks.length - max; i++) await c.delete(ks[i]);
 }
-async function tileFirst(req) {
-  const c = await caches.open(TILES), hit = await c.match(req.url);
+async function tileFirst(req) {   // the India/Asia pack lives in its own cache and is never trimmed
+  const hit = (await (await caches.open(PACK)).match(req.url)) || (await (await caches.open(TILES)).match(req.url));
   if (hit) return hit;
   const res = await fetch(req);
-  if (res.ok && res.type !== 'opaque') { c.put(req.url, res.clone()); if (++puts % 200 === 0) trimTiles(); }
+  if (res.ok && res.type !== 'opaque') { (await caches.open(TILES)).put(req.url, res.clone()); if (++puts % 100 === 0) trimCache(TILES, TILE_MAX); }
+  return res;
+}
+async function imgFirst(req) {   // item photos: file names are content-specific, so a cached copy never goes stale
+  const c = await caches.open(IMGS), hit = await c.match(req);
+  if (hit) return hit;
+  const res = await fetch(req);
+  if (res.ok && res.type === 'basic') { c.put(req, res.clone()); if (++puts % 50 === 0) trimCache(IMGS, IMG_MAX); }
   return res;
 }
 async function appNet(e) {   // network first (fresh after every deploy), cache when offline or slow (> 4 s)
-  const c = await caches.open(APP), req = e.request, key = req.mode === 'navigate' ? './' : req;
+  const c = await caches.open(APP), req = e.request, u = new URL(req.url), scope = new URL(self.registration.scope).pathname;
+  const shell = req.mode === 'navigate' && (u.pathname === scope || u.pathname === scope + 'index.html'), key = shell ? './' : req;   // only the app page itself is the shell
   const net = fetch(req).then(res => { if (res.ok && res.type === 'basic') c.put(key, res.clone()); return res; });
   net.catch(() => {});
   const slow = new Promise(r => setTimeout(r, 4000)).then(() => c.match(key, { ignoreSearch: true }));
@@ -50,7 +59,10 @@ self.addEventListener('fetch', e => {
   const req = e.request; if (req.method !== 'GET') return;
   const u = req.url;
   if (isTile(u)) { e.respondWith(tileFirst(req).catch(() => fetch(req))); return; }
-  if (new URL(u).origin === self.location.origin) e.respondWith(appNet(e));
+  const url = new URL(u);
+  if (url.origin !== self.location.origin) return;
+  if (url.pathname.includes('/assets/img/')) { e.respondWith(imgFirst(req).catch(() => fetch(req))); return; }
+  e.respondWith(appNet(e));
 });
 
 // ---- offline tile pack: India (z3–7) + Asia (z3–5) for one basemap ----
@@ -66,7 +78,7 @@ self.addEventListener('message', e => {
   const d = e.data || {}; if (d.type !== 'pack') return;
   const src = e.source;
   e.waitUntil((async () => {
-    const c = await caches.open(TILES), list = tilesFor(d.tpl, d.max || 7);
+    const c = await caches.open(PACK), list = tilesFor(d.tpl, d.max || 7);
     let done = 0, fail = 0, i = 0;
     const tell = fin => src && src.postMessage({ type: 'pack', base: d.base, done, fail, total: list.length, fin });
     async function worker() {

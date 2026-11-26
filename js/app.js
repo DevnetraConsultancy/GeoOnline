@@ -60,7 +60,7 @@ var REMOTE = GEO.REMOTE || {};
 var BG = { 'in-rivercities': 'in-rivers', 'in-dams': 'in-rivers', 'in-falls': 'in-rivers', 'w-rivercities': 'w-rivers', 'w-falls': 'w-rivers' };
 
 var map, baseL, labelL, layerG, tmpG, bgG, stG, namesEl, panel = $('#panel');
-var cur = null, mode = 'study', sel = null, hidden = {}, showNames = true, Q = null, lastQ = null, qCount = 10, tick = null;
+var cur = null, mode = 'study', sel = null, hidden = {}, showNames = true, Q = null, lastQ = null, qCount = 10, tick = null, autoT = null;
 
 /* ---------------- data prep ---------------- */
 function setAnchor(it) {
@@ -153,7 +153,7 @@ function buildRemote(p) {
           if (v != null) { cls = 'c0'; M.bins.forEach(function (b, i) { if (v >= b) cls = 'c' + (i + 1); }); }
           var vs = v == null ? 'n/a' : (R.metric === 'pop' ? fmt(v) : fmt(v) + (M.unit === '%' ? '%' : M.unit === '/km²' ? ' /km²' : ''));
           p.items.push({ k: 'poly', geo: { type: 'MultiPolygon', coordinates: G.grp[k].polys }, n: info ? info[0] : G.grp[k].raw, s: M.label + ': ' + vs,
-            d: v == null ? '' : 'Rank ' + rankOf[k] + ' of ' + Object.keys(CE.states).length + ' · India: ' + (R.metric === 'pop' ? fmt(CE.india[R.metric]) : fmt(CE.india[R.metric])) + ' (Census 2011)', t: cls });
+            d: v == null ? '' : 'Rank ' + rankOf[k] + ' of ' + Object.keys(CE.states).length + ' · India: ' + fmt(CE.india[R.metric]) + (R.metric === 'pop' ? '' : M.unit === '%' ? '%' : M.unit === '/km²' ? ' /km²' : '') + ' (Census 2011)', t: cls });
           return;
         }
         if (f) {
@@ -243,6 +243,7 @@ function groupStates(data, R) {
 /* ---------------- map ---------------- */
 function initMap() {
   map = L.map('map', { zoomControl: false, worldCopyJump: true, minZoom: 2, maxZoom: 12, zoomSnap: 0.5, zoomDelta: 0.5 });
+  map.attributionControl.addAttribution('Data: <a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener">Natural Earth</a>, <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors</a>, <a href="https://github.com/datameet/maps" target="_blank" rel="noopener">DataMeet</a> (CC BY 4.0)');
   L.control.zoom({ position: 'bottomright' }).addTo(map);
   L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(map);
   map.createPane('bg').style.zIndex = 350; map.getPane('bg').style.pointerEvents = 'none';
@@ -285,6 +286,7 @@ function setBase(k, auto) {
   $('#bsel').value = k;
 }
 function setLabels(on) {
+  if (!!on === !!labelL) return;   // already in the wanted state: no tile reload
   if (labelL) { map.removeLayer(labelL); labelL = null; }
   if (on) labelL = L.tileLayer(LABELS, { pane: 'lbl', maxZoom: 12, maxNativeZoom: 13, crossOrigin: true }).addTo(map);
 }
@@ -322,8 +324,8 @@ function render() {
       } else it.L = L.geoJSON(it.geo, { style: Object.assign({ bubblingMouseEvents: false }, st) });
       var hit = it.H || it.L;
       hit.on('click', function (e) { L.DomEvent.stop(e); onItemClick(it); });
-      hit.on('mouseover', function () { if (Q && Q.lock) return; if (it.k === 'pt') it.L.setStyle({ radius: 9 }); else if (it.k === 'line') it.L.setStyle({ weight: st.weight + 3 }); else it.L.setStyle({ fillOpacity: 0.8 }); });
-      hit.on('mouseout', function () { if (Q && Q.lock) return; if (it === sel) return; if (it.k === 'pt') it.L.setStyle({ radius: st.radius }); else if (it.k === 'line') it.L.setStyle({ weight: st.weight }); else it.L.setStyle({ fillOpacity: st.fillOpacity }); });
+      hit.on('mouseover', function () { if (Q && (Q.lock || (Q.kind === 'name' && it === Q.cur))) return; if (it.k === 'pt') it.L.setStyle({ radius: 9 }); else if (it.k === 'line') it.L.setStyle({ weight: st.weight + 3 }); else it.L.setStyle({ fillOpacity: 0.8 }); });
+      hit.on('mouseout', function () { if (Q && (Q.lock || (Q.kind === 'name' && it === Q.cur))) return; if (it === sel) return; if (it.k === 'pt') it.L.setStyle({ radius: st.radius }); else if (it.k === 'line') it.L.setStyle({ weight: st.weight }); else it.L.setStyle({ fillOpacity: st.fillOpacity }); });
       if (mode === 'study') hit.bindTooltip(esc(it.n), { sticky: true, className: 'tt', direction: 'top', offset: [0, -6] });
       it.L.addTo(layerG); if (it.H) it.H.addTo(layerG);
     });
@@ -368,14 +370,14 @@ if ('serviceWorker' in navigator && /^https:|^http:\/\/(localhost|127\.0\.0\.1)/
     var el = $('#pack'); if (!el) return;
     if (!d.fin) { el.className = 'on'; el.textContent = '⬇ ভারত ও এশিয়ার ম্যাপ অফলাইনে রাখা হচ্ছে… ' + Math.round(d.done / d.total * 100) + '%'; return; }
     packing[d.base] = false;
-    if (d.fail < d.total * 0.05) store.set('pack.' + d.base, Date.now());
+    if (d.fail < d.total * 0.05) store.set('pack2.' + d.base, Date.now());
     el.className = 'on done'; el.textContent = d.fail < d.total * 0.05 ? '✓ ভারত ও এশিয়ার ম্যাপ এই ব্রাউজারে সংরক্ষিত — এবার দ্রুত খুলবে' : 'কিছু টাইল নামানো যায়নি — পরে আবার চেষ্টা হবে';
     setTimeout(function () { el.className = ''; }, 4000);
   });
 }
 function packSoon(k) {   // after the page settles, quietly download the India + Asia tiles of this basemap once (~4 MB)
   if (!swReady || !BASES[k] || !BASES[k][1] || packing[k] || navigator.onLine === false) return;
-  var last = store.get('pack.' + k, 0); if (last && Date.now() - last < 30 * 864e5) return;   // refresh monthly
+  var last = store.get('pack2.' + k, 0); if (last && Date.now() - last < 30 * 864e5) return;   // refresh monthly
   if (navigator.connection && navigator.connection.saveData) return;
   clearTimeout(packTimer);
   packTimer = setTimeout(function () {
@@ -396,15 +398,16 @@ function bStyle(k) {
   return { color: s.c, weight: w, opacity: +s.o, fill: false, dashArray: da, lineCap: s.d === 'dot' || s.d === 'dashdot' ? 'round' : 'butt', lineJoin: 'round', interactive: false };
 }
 function restyleBounds() { if (stL) stL.setStyle(bStyle('st')); if (inL) inL.setStyle(bStyle('in')); }
+var bgTok = 0, extTok = 0;
 function loadBg() {
   bgG.clearLayers(); stG.clearLayers(); inG.clearLayers();
-  var p = cur; if (!p) return;
+  var p = cur, tok = ++bgTok; if (!p) return;
   var src = BG[p.id] && GEO.byId[BG[p.id]], hist = p.remote && p.remote.src === 'hist';
-  if (src) buildRemote(src).then(function () { if (cur !== p) return; src.items.forEach(function (it) { if (it.k === 'line') L.polyline(it.c, { color: '#1f78b4', weight: 1.6, opacity: 0.75, interactive: false, pane: 'bg' }).addTo(bgG); }); }).catch(function () {});
+  if (src) buildRemote(src).then(function () { if (cur !== p || tok !== bgTok) return; src.items.forEach(function (it) { if (it.k === 'line') L.polyline(it.c, { color: '#1f78b4', weight: 1.6, opacity: 0.75, interactive: false, pane: 'bg' }).addTo(bgG); }); }).catch(function () {});
   if (bst.st.on && !p.world && !(p.remote && /states|hist/.test(p.remote.src)))
-    loadRemote('states').then(function (d) { if (cur !== p) return; if (!stL) stL = L.geoJSON(d, { pane: 'bg', interactive: false, style: function () { return bStyle('st'); } }); stG.addLayer(stL); }).catch(function () {});
+    loadRemote('states').then(function (d) { if (cur !== p || tok !== bgTok) return; if (!stL) stL = L.geoJSON(d, { pane: 'bg', interactive: false, style: function () { return bStyle('st'); } }); stG.addLayer(stL); }).catch(function () {});
   if (bst.in.on && !hist)
-    loadRemote('borders').then(function (d) { if (cur !== p) return; if (!inL) inL = L.geoJSON(d, { pane: 'bnd', renderer: bRend, interactive: false, style: function () { return bStyle('in'); } }); inG.addLayer(inL); }).catch(function () {});
+    loadRemote('borders').then(function (d) { if (cur !== p || tok !== bgTok) return; if (!inL) inL = L.geoJSON(d, { pane: 'bnd', renderer: bRend, interactive: false, style: function () { return bStyle('in'); } }); inG.addLayer(inL); }).catch(function () {});
 }
 var SWATCH = ['#8e2a4a', '#c0392b', '#e67e22', '#7a5c45', '#2c3e50', '#6c3483', '#1f618d', '#117a65', '#555555', '#000000'];
 function bPopHtml() {
@@ -440,7 +443,7 @@ function initBoundsUI() {
   });
   pop.addEventListener('change', function (e) {
     var t = e.target, k = t.dataset.k;
-    if (k === 'esri') { bst.esri = t.checked; setLabels(t.checked); bSave(); return; }
+    if (k === 'esri') { bst.esri = t.checked; setLabels(t.checked && mode === 'study'); bSave(); return; }
     if (t.dataset.f === 'on') { bst[k].on = t.checked; bSave(); loadBg(); }
   });
   pop.addEventListener('click', function (e) {
@@ -491,7 +494,7 @@ function bigPart(geo) {
 }
 var SHORT = { 'Dadra and Nagar Haveli and Daman and Diu': 'DNH & DD', 'Dadra & Nagar Haveli and Daman & Diu': 'DNH & DD', 'Andaman and Nicobar Islands': 'Andaman & Nicobar Is.', 'Andaman & Nicobar Islands': 'Andaman & Nicobar Is.', 'NCT of Delhi': 'Delhi', 'Jammu and Kashmir': 'Jammu & Kashmir' };
 // hand-placed label points where the shape centre misleads (small or oddly shaped units)  [lat, lng]
-var LPOS = { 'Goa': [15.35, 74.05], 'Delhi': [28.65, 77.15], 'Chandigarh': [30.73, 76.78], 'Puducherry': [11.93, 79.8], 'DNH & DD': [20.3, 73.05], 'Lakshadweep': [10.6, 72.6], 'Sikkim': [27.55, 88.45], 'Tripura': [23.75, 91.7], 'Andaman & Nicobar Is.': [11.7, 92.75], 'Kerala': [10.2, 76.35], 'West Bengal': [23.4, 87.85], 'Uttarakhand': [30.1, 79.2], 'Himachal Pradesh': [31.9, 77.2] };
+var LPOS = {'Arunachal Pradesh': [28.45,94.75], 'Assam': [26.23,92.99], 'Chandigarh': [30.73,76.78], 'Karnataka': [15.32,75.56], 'Manipur': [24.63,93.79], 'Meghalaya': [25.54,91.76], 'Mizoram': [23.54,92.87], 'Nagaland': [26.13,94.63], 'Punjab': [30.7,75.5], 'Rajasthan': [27.02,73.89], 'Sikkim': [27.55,88.45], 'Tripura': [23.75,91.7], 'Uttarakhand': [30.1,79.2], 'Telangana': [17.84,78.99], 'Bihar': [25.7,85.54], 'Kerala': [10.2,76.35], 'Madhya Pradesh': [23.52,80.1], 'Andaman & Nicobar Is.': [11.7,92.75], 'Gujarat': [23.35,71.9], 'Lakshadweep': [10.6,72.6], 'Odisha': [20.75,84.62], 'DNH & DD': [20.3,73.05], 'Jammu & Kashmir': [33.79,74.54], 'Chhattisgarh': [22.19,82.58], 'Delhi (NCT)': [28.67,77.12], 'Goa': [15.35,74.05], 'Haryana': [29.05,76.26], 'Himachal Pradesh': [31.9,77.2], 'Jharkhand': [23.5,84.97], 'Tamil Nadu': [10.97,78.35], 'Uttar Pradesh': [26.83,80.66], 'West Bengal': [23.4,87.85], 'Andhra Pradesh': [14.82,78.86], 'Puducherry': [11.93,79.8], 'Maharashtra': [19.37,75.32], 'Ladakh': [34.26,77.71]};   // label points for every state (precomputed pole of inaccessibility; hand-set for small/odd shapes)
 function refPrep(key) {
   if (REF[key]) return Promise.resolve(REF[key]);
   if (key === 'cities') return loadRemote('cities').then(function (d) { return (REF.cities = d.map(function (c) { return { n: c[0], a: L.latLng(c[1], c[2]), z: c[3], cap: c[4], ind: c[5] }; })); });
@@ -570,10 +573,10 @@ function extList() { return cur && GEO.EXTENT ? GEO.EXTENT[cur.id] : null; }
 function extIndex() { var E = extList(); if (!E) return -1; if (extSel[cur.id] != null) return extSel[cur.id]; for (var i = 0; i < E.length; i++) if (E[i].def) return i; return 0; }
 function drawExtent() {
   if (!extG) return; extG.clearLayers();
-  var E = extList(), i = extIndex(), p = cur; if (!E || i < 0) return;
+  var E = extList(), i = extIndex(), p = cur, tok = ++extTok; if (!E || i < 0) return;
   var e = E[i];
   loadRemote('hist-' + e.y).then(function (d) {
-    if (cur !== p || extIndex() !== i) return;
+    if (cur !== p || extIndex() !== i || tok !== extTok) return;
     d.features.forEach(function (f) {
       var part = e.parts.filter(function (x) { return x[0] === f.properties.NAME; })[0]; if (!part) return;
       L.geoJSON(f, { pane: 'bg', interactive: false, style: { color: part[1], weight: 1.6, opacity: 0.9, dashArray: '5 4', fillColor: part[1], fillOpacity: 0.22 } }).addTo(extG);
@@ -601,13 +604,14 @@ var MEDIA = null, mediaBusy = false;
 function mediaOf(it) { return MEDIA && it && it.p ? MEDIA[it.p.id + '|' + it.n] : null; }   // [wikipedia title, image file or '', credit]
 function loadMedia() {
   if (MEDIA || mediaBusy) return; mediaBusy = true;
-  loadRemote('media').then(function (d) { MEDIA = d || {}; if (sel && $('#dcard')) showDetail(sel); }).catch(function () { MEDIA = {}; });
+  loadRemote('media').then(function (d) { mediaBusy = false; if (d) { MEDIA = d; if (sel && $('#dcard')) showDetail(sel); } })
+    .catch(function () { mediaBusy = false; });   // a failed load is retried on the next card instead of disabling images for the session
 }
 function detailHtml(it, open) {
   var D = it.dt || {}, M = mediaOf(it), ty = it.p.types && it.p.types[it.t] ? it.p.types[it.t][0] : '';
   var h = '<div class="dcard" id="dcard"><button class="dx" data-act="dclose" aria-label="বন্ধ">✕</button><h4>' + esc(it.n) + '</h4>' +
     '<div class="dmeta">' + [D.era, D.place || it.s, ty].filter(Boolean).map(esc).join(' · ') + '</div>';
-  if (M && M[1]) h += '<figure class="dimg"><img src="assets/img/' + esc(M[1]) + '" alt="' + esc(it.n) + '" loading="lazy" onerror="this.parentNode.remove()">' + (M[2] ? '<figcaption>' + esc(M[2]) + '</figcaption>' : '') + '</figure>';
+  if (M && M[1]) h += '<figure class="dimg"><img src="assets/img/' + esc(M[1]) + '" alt="' + esc(it.n) + '" loading="lazy" onerror="this.parentNode.remove()">' + (M[2] ? '<figcaption>' + (M[3] ? '<a href="https://commons.wikimedia.org/wiki/File:' + encodeURIComponent(M[3]) + '" target="_blank" rel="noopener">' + esc(M[2]) + '</a>' : esc(M[2])) + ' (resized)</figcaption>' : '') + '</figure>';
   if (it.d) h += '<p class="dnote">' + esc(it.d) + '</p>';
   if (D.old) h += '<p class="dold"><b>পুরনো / অন্য নাম</b>' + esc(D.old) + '</p>';
   if (D.idea) h += '<p class="didea"><b>মূল ভাবনা</b>' + esc(D.idea) + '</p>';
@@ -646,7 +650,7 @@ function select(it, fly) {
 function fillList(q) {
   var Lst = $('#list'); if (!Lst) return; q = (q || '').toLowerCase();
   var its = cur.items.filter(visible).filter(function (it) { return !q || (it.n + ' ' + it.s + ' ' + it.d + (it.dt ? ' ' + (it.dt.old || '') + ' ' + (it.dt.books || []).map(function (b) { return b.t; }).join(' ') : '')).toLowerCase().indexOf(q) >= 0; }).sort(function (a, b) { return a.n.localeCompare(b.n); });
-  Lst.innerHTML = its.map(function (it) { return '<div class="row' + (it === sel ? ' on' : '') + '" data-act="sel" data-i="' + it.i + '"><i style="background:' + colorOf(it) + '"></i><div><b>' + esc(it.n) + (nBooks(it) ? ' <span class="nb">📚 ' + nBooks(it) + '</span>' : '') + '</b><small>' + esc((it.dt && it.dt.era ? it.dt.era + ' · ' : '') + it.s) + '</small><p>' + esc(it.d) + factsHtml(it) + '</p></div></div>'; }).join('') || '<div class="empty">কিছু পাওয়া যায়নি</div>';
+  Lst.innerHTML = its.map(function (it) { return '<div class="row' + (it === sel ? ' on' : '') + '" data-act="sel" tabindex="0" role="button" data-i="' + it.i + '"><i style="background:' + colorOf(it) + '"></i><div><b>' + esc(it.n) + (nBooks(it) ? ' <span class="nb">📚 ' + nBooks(it) + '</span>' : '') + '</b><small>' + esc((it.dt && it.dt.era ? it.dt.era + ' · ' : '') + it.s) + '</small><p>' + esc(it.d) + factsHtml(it) + '</p></div></div>'; }).join('') || '<div class="empty">কিছু পাওয়া যায়নি</div>';
 }
 function chipsHtml() {
   var p = cur; if (!p.types) return '';
@@ -654,7 +658,7 @@ function chipsHtml() {
 }
 function fold(key, title, body, defOpen) {   // a section with a ＋/− header; state remembered per section kind
   var st = store.get('fold', {}), open = st[key] == null ? defOpen !== false : st[key];
-  return '<section class="fold' + (open ? '' : ' shut') + '" data-fold="' + key + '"><button class="fh" data-act="fold"><span>' + title + '</span><i>' + (open ? '−' : '＋') + '</i></button><div class="fb">' + body + '</div></section>';
+  return '<section class="fold' + (open ? '' : ' shut') + '" data-fold="' + key + '"><button class="fh" data-act="fold" aria-expanded="' + open + '"><span>' + title + '</span><i>' + (open ? '−' : '＋') + '</i></button><div class="fbody">' + body + '</div></section>';
 }
 function renderPanel() {
   if (mode === 'quiz') { if (Q) quizPanel(); else quizSetup(); return; }
@@ -691,8 +695,8 @@ function quizSetup() {
     card('name', '🔤', 'এটা কোন জায়গা?', 'একটা জায়গা জ্বলবে — ৪টি বিকল্প থেকে নাম বাছো (কীবোর্ড 1–4)।') +
     card('pin', '📍', 'ফাঁকা ম্যাপে পিন বসাও', 'কোনো চিহ্ন নেই — ঠিক জায়গায় ক্লিক করো, কত কিমি দূরে পড়ল দেখাবে।', !pts.length) +
     card('order', '↕', 'উত্তর→দক্ষিণ / পশ্চিম→পূর্ব সাজাও', 'UPSC প্রিলিমসের ধাঁচে — ৪টি জায়গা সঠিক ক্রমে সাজাও।', pts.length < 4) +
-    (cur.items.some(nBooks) ? card('book', '📚', 'এই বইটি কার লেখা?', 'বইয়ের নাম ও সাল দেওয়া থাকবে — ৪ জন লেখকের মধ্যে ঠিকজনকে বাছো।') : '') +
-    (cur.items.filter(function (x) { return x.dt && x.dt.old; }).length >= 4 ? card('old', '🏺', 'পুরনো নাম → আজকের জায়গা', 'ইতিহাসের নাম দেওয়া থাকবে (যেমন Akbarabad, Pataliputra) — আজকের নামটা বাছো।') : '') +
+    (cur.items.filter(visible).filter(nBooks).length >= 4 ? card('book', '📚', 'এই বইটি কার লেখা?', 'বইয়ের নাম ও সাল দেওয়া থাকবে — ৪ জন লেখকের মধ্যে ঠিকজনকে বাছো।') : '') +
+    (cur.items.filter(visible).filter(function (x) { return x.dt && x.dt.old && oldClue(x); }).length >= 4 ? card('old', '🏺', 'পুরনো নাম → আজকের জায়গা', 'ইতিহাসের নাম দেওয়া থাকবে (যেমন Akbarabad, Pataliputra) — আজকের নামটা বাছো।') : '') +
     card('weak', '🔁', 'দুর্বল জায়গা ঝালিয়ে নাও' + (weak ? ' (' + weak + ')' : ''), weak ? 'আগে যেগুলো ভুল করেছ শুধু সেগুলো।' : 'এখনও কোনো দুর্বল জায়গা নেই — আগে অন্য কুইজ খেলো।', !weak) +
     (weak ? '<button class="qacts-link" data-act="qreset">দুর্বল-তালিকা মুছে দাও</button>' : '');
 }
@@ -712,15 +716,18 @@ function mkOrder(items) {
   }
   return null;
 }
-function quizStart(kind, pool) {
-  if (kind === 'weak') { kind = 'name'; pool = weakItems(); }
+function quizStart(kind, pool, bks0) {
+  clearTimeout(autoT);
+  var label = kind, partial = !!pool;
+  if (kind === 'weak') { kind = 'name'; pool = weakItems(); partial = true; }
   var bks = null;
-  if (kind === 'old') {
+  if ((kind === 'old' || kind === 'book') && pool && bks0 && bks0.length === pool.length) { bks = bks0; }   // replay of the missed questions only
+  else if (kind === 'old') {
     var olds = shuffle(cur.items.filter(visible).filter(function (x) { return x.dt && x.dt.old && oldClue(x); })); if (olds.length < 4) return;
     if (qCount) olds = olds.slice(0, qCount);
     pool = olds; bks = olds.map(function (x) { return { t: oldClue(x), old: true }; });
   }
-  if (kind === 'book') {
+  else if (kind === 'book') {
     var pairs = []; cur.items.filter(visible).forEach(function (it) { (it.dt && it.dt.books || []).forEach(function (b) { pairs.push([it, b]); }); });
     if (cur.items.filter(nBooks).length < 4) return;
     pairs = shuffle(pairs); if (qCount) pairs = pairs.slice(0, qCount);
@@ -736,14 +743,14 @@ function quizStart(kind, pool) {
     if (!qs.length) return;
   } else if (kind === 'book' || kind === 'old') qs = pool;
   else { qs = pool ? shuffle(items.slice()) : prioritise(items); if (!pool && qCount) qs = qs.slice(0, qCount); }
-  Q = { kind: kind, bks: bks, qs: qs, i: 0, ok: 0, streak: 0, bestStreak: 0, wrong: [], t0: Date.now(), lock: false, km: 0 };
+  Q = { kind: kind, label: label, partial: partial, bks: bks, wrongBk: [], qs: qs, i: 0, ok: 0, streak: 0, bestStreak: 0, wrong: [], t0: Date.now(), lock: false, km: 0 };
   setLabels(false);
   fit(); clearInterval(tick);
   tick = setInterval(function () { var e = $('#qt'); if (e && Q) { var s = Math.floor((Date.now() - Q.t0) / 1000); e.textContent = Math.floor(s / 60) + ':' + ('0' + s % 60).slice(-2); } }, 500);
   quizAsk();
 }
 function quizAsk() {
-  clearTimeout(Q.auto); Q.lock = false; Q.cur = Q.qs[Q.i]; Q.bk = Q.bks ? Q.bks[Q.i] : null; Q.pick = []; sel = null;
+  clearTimeout(autoT); Q.lock = false; Q.cur = Q.qs[Q.i]; Q.bk = Q.bks ? Q.bks[Q.i] : null; Q.pick = []; sel = null;
   render(); quizPanel();
   if (Q.kind === 'name') { ring(Q.cur, '#ffc53d'); if (Q.cur.k === 'pt' && Q.cur.L) { Q.cur.L.setStyle({ fillColor: '#ffc53d', radius: 9, color: '#111' }); Q.cur.L.bringToFront(); } focusOn(Q.cur, false); }
 }
@@ -787,22 +794,22 @@ function orderCheck(skipped) {
 function answer(ok, extra, noStat) {
   if (!Q || Q.lock) return; Q.lock = true; var it = Q.cur;
   if (!noStat) recStat(it, ok);
-  if (ok) { Q.ok++; Q.streak++; Q.bestStreak = Math.max(Q.bestStreak, Q.streak); } else { Q.streak = 0; Q.wrong.push(it); }
+  if (ok) { Q.ok++; Q.streak++; Q.bestStreak = Math.max(Q.bestStreak, Q.streak); } else { Q.streak = 0; Q.wrong.push(it); if (Q.bks) Q.wrongBk.push(Q.bk); }
   var fb = $('#fb'); if (fb) fb.innerHTML = '<div class="fb ' + (ok ? 'ok' : 'no') + '"><b>' + (ok ? '✔ একদম ঠিক!' : '✘ ভুল হল') + '</b> ' + (extra || '') + '<div class="fbn">' + esc(it.n) + ' <small>' + esc(it.s) + '</small></div><p>' + esc(it.d) + '</p></div><button class="next" data-act="qnext">' + (Q.i + 1 < Q.qs.length ? 'পরের প্রশ্ন →' : 'ফলাফল দেখো →') + '</button>';
   var bar = panel.querySelector('.qbar'); if (bar) { bar.children[1].textContent = '✔ ' + Q.ok; bar.children[2].textContent = '🔥 ' + Q.streak; }
-  if (ok && Q.kind !== 'pin' && Q.kind !== 'order' && Q.kind !== 'book' && Q.kind !== 'old') Q.auto = setTimeout(quizNext, 1400);
+  if (ok && Q.kind !== 'pin' && Q.kind !== 'order' && Q.kind !== 'book' && Q.kind !== 'old') autoT = setTimeout(quizNext, 1400);
 }
-function quizNext() { if (!Q) return; clearTimeout(Q.auto); Q.i++; if (Q.i >= Q.qs.length) quizEnd(); else quizAsk(); }
+function quizNext() { if (!Q) return; clearTimeout(autoT); Q.i++; if (Q.i >= Q.qs.length) quizEnd(); else quizAsk(); }
 function quizEnd() {
-  clearInterval(tick); var n = Q.qs.length, pc = Math.round(Q.ok / n * 100), secs = Math.round((Date.now() - Q.t0) / 1000);
-  var best = store.get('best', {}), key = cur.id + ':' + Q.kind, rec = best[key] == null || pc > best[key]; if (rec) { best[key] = pc; store.set('best', best); }
-  var medal = pc >= 90 ? '🏆' : pc >= 70 ? '🥈' : pc >= 50 ? '🥉' : '📚', wrong = Q.wrong, kind = Q.kind;
+  clearInterval(tick); clearTimeout(autoT); var n = Q.qs.length, pc = Math.min(100, Math.round(Q.ok / n * 100)), secs = Math.round((Date.now() - Q.t0) / 1000);
+  var best = store.get('best', {}), key = cur.id + ':' + Q.kind, rec = !Q.partial && (best[key] == null || pc > best[key]); if (rec) { best[key] = pc; store.set('best', best); }   // replays of a subset never count as a best score
+  var medal = pc >= 90 ? '🏆' : pc >= 70 ? '🥈' : pc >= 50 ? '🥉' : '📚', wrong = Q.wrong, kind = Q.kind, again = Q.label === 'weak' ? 'weak' : kind;
   var flat = kind === 'order' ? wrong.reduce(function (a, s) { return a.concat(s.items); }, []) : wrong;
-  lastQ = { kind: kind, wrong: flat }; Q = null; render(); buildNav();
+  lastQ = { kind: kind, wrong: flat, bks: Q.bks ? Q.wrongBk : null }; Q = null; render(); buildNav();
   var row = function (it) { return it.order ? '<div class="row on"><i style="background:#d63f3f"></i><div><b>' + esc(it.n) + '</b><small>' + esc(it.s) + '</small><p>' + esc(it.d) + '</p></div></div>'
-    : '<div class="row" data-act="review" data-i="' + it.i + '"><i style="background:#d63f3f"></i><div><b>' + esc(it.n) + '</b><small>' + esc(it.s) + '</small><p>' + esc(it.d) + '</p></div></div>'; };
+    : '<div class="row" data-act="review" tabindex="0" role="button" data-i="' + it.i + '"><i style="background:#d63f3f"></i><div><b>' + esc(it.n) + '</b><small>' + esc(it.s) + '</small><p>' + esc(it.d) + '</p></div></div>'; };
   panel.innerHTML = '<div class="score"><div class="med">' + medal + '</div><div class="big">' + pc + '%</div><p>' + (n - wrong.length) + '/' + n + ' সঠিক · সময় ' + Math.floor(secs / 60) + ':' + ('0' + secs % 60).slice(-2) + (rec ? ' · <b>নতুন সেরা স্কোর!</b>' : '') + '</p>' +
-    '<button class="btn" data-act="qstart" data-kind="' + kind + '">আবার খেলো</button> ' + (flat.length >= (kind === 'order' ? 4 : 1) ? '<button class="btn ghost" data-act="qwrong">শুধু ভুলগুলো (' + wrong.length + ')</button> ' : '') + '<button class="btn ghost" data-act="study">পড়ায় ফেরো</button></div>' +
+    '<button class="btn" data-act="qstart" data-kind="' + again + '">আবার খেলো</button> ' + (flat.length >= (kind === 'order' ? 4 : 1) ? '<button class="btn ghost" data-act="qwrong">শুধু ভুলগুলো (' + wrong.length + ')</button> ' : '') + '<button class="btn ghost" data-act="study">পড়ায় ফেরো</button></div>' +
     (wrong.length ? '<h3>যেগুলো ভুল হয়েছে</h3><div class="wrongs">' + wrong.map(row).join('') + '</div>' : '<p class="intro" style="text-align:center">একটাও ভুল হয়নি — দারুণ! 🎉</p>');
 }
 function onItemClick(it) {
@@ -835,7 +842,7 @@ function reveal() {
 
 /* ---------------- chrome ---------------- */
 function setMode(m) {
-  mode = m; Q = null; clearInterval(tick); sel = null; setLabels(m === 'study' && bst.esri);
+  mode = m; Q = null; clearInterval(tick); clearTimeout(autoT); sel = null; setLabels(m === 'study' && bst.esri);
   $('#mStudy').classList.toggle('on', m === 'study'); $('#mQuiz').classList.toggle('on', m === 'quiz');
   if (cur && cur.items) { render(); renderPanel(); }
 }
@@ -846,7 +853,7 @@ function buildNav() {
     if (g[3] !== lastSub) {
       if (lastSub) h += '</div>';
       lastSub = g[3]; var S = SUBJECTS.filter(function (s) { return s[0] === g[3]; })[0], sOpen = subjOpen[g[3]] !== false || (cur && cur.group && GROUPS.some(function (x) { return x[0] === cur.group && x[3] === g[3]; }));
-      h += '<div class="sgrp' + (sOpen ? '' : ' shut') + '" data-s="' + g[3] + '"><button class="subj">' + (S ? S[1] : g[3]) + '<i>' + (sOpen ? '−' : '＋') + '</i></button>';
+      h += '<div class="sgrp' + (sOpen ? '' : ' shut') + '" data-s="' + g[3] + '"><button class="subj" aria-expanded="' + sOpen + '">' + (S ? S[1] : g[3]) + '<i>' + (sOpen ? '−' : '＋') + '</i></button>';
     }
     var isOpen = open[g[0]] || (cur && cur.group === g[0]);
     h += '<div class="grp' + (isOpen ? '' : ' shut') + '" data-g="' + g[0] + '"><button>' + g[1] + '<small>' + ps.length + '</small><i>' + (isOpen ? '−' : '＋') + '</i></button><div class="links">' + ps.map(function (p) {
@@ -880,7 +887,7 @@ function renderHome() {
 }
 function go() {
   var m = location.hash.replace(/^#\/?/, '').split('/'), id = m[0], wantQuiz = m[1] === 'quiz', want = m[1] === 'at' ? decodeURIComponent(m[2] || '') : '';
-  var p = GEO.byId[id] || null; cur = p; Q = null; clearInterval(tick); mode = 'study'; hidden = {}; sel = null;
+  var p = GEO.byId[id] || null; cur = p; Q = null; clearInterval(tick); clearTimeout(autoT); mode = 'study'; hidden = {}; sel = null; setLabels(bst.esri);
   if (p && p.hideTypes) p.hideTypes.forEach(function (t) { hidden[t] = true; });
   document.body.classList.toggle('home', !p); document.body.classList.remove('nav');
   $('#mStudy').classList.add('on'); $('#mQuiz').classList.remove('on');
@@ -893,7 +900,7 @@ function go() {
     if (cur !== p) return;
     $('#psub').textContent = (p.bn || '') + ' · ' + p.items.length + 'টি'; buildNav();
     if (wantQuiz) setMode('quiz'); else { render(); renderPanel(); }
-    if (want) { var it = p.items.filter(function (x) { return x.n === want; })[0]; if (it) setTimeout(function () { select(it, true); }, 200); }
+    if (want) { var it = p.items.filter(function (x) { return x.n === want; })[0]; if (it) setTimeout(function () { if (cur === p && mode === 'study') select(it, true); }, 200); }
   };
   if (p.remote && !p.built) {
     panel.innerHTML = '<div class="loading">🌍 ম্যাপ ডেটা লোড হচ্ছে…</div>';
@@ -934,7 +941,15 @@ function gsearch(q) {
   var out = [];
   GEO.pages.forEach(function (p) {
     if (p.group === 'mix' || out.length > 40) return; if (!p.remote || p.built) norm(p);
-    (p.items || []).forEach(function (it) { if (out.length <= 40 && it.n.toLowerCase().indexOf(q) >= 0) out.push(it); });
+    var list = p.items;
+    if (!list) {   // line/polygon page not opened yet: search its names without building the geometry
+      var R = p.remote || {}; list = [];
+      (p.pts || []).forEach(function (a) { list.push({ n: a[0], s: a[3] || '', p: p }); });
+      (p.lines || []).forEach(function (a) { list.push({ n: a[0], s: a[2] || '', p: p }); });
+      (R.list || []).forEach(function (r) { list.push({ n: r[1], s: r[2] || '', p: p }); });
+      if (R.info) Object.keys(R.info).forEach(function (k) { list.push({ n: R.info[k][0], s: R.info[k][1] || '', p: p }); });
+    }
+    list.forEach(function (it) { if (out.length <= 40 && String(it.n).toLowerCase().indexOf(q) >= 0) out.push(it); });
   });
   box.innerHTML = out.map(function (it) { return '<a href="#/' + it.p.id + '/at/' + encodeURIComponent(it.n) + '"><b>' + esc(it.n) + '</b><small>' + esc(it.p.title) + ' · ' + esc(it.s) + '</small></a>'; }).join('') || '<a>কিছু পাওয়া যায়নি</a>';
   box.classList.add('on');
@@ -946,18 +961,18 @@ panel.addEventListener('click', function (e) {
   if (a === 'sel') select(cur.items[+t.dataset.i], true);
   else if (a === 'chip') { hidden[t.dataset.t] = !hidden[t.dataset.t]; sel = null; render(); renderPanel(); }
   else if (a === 'ext') { extSel[cur.id] = +t.dataset.i; drawExtent(); var ex = panel.querySelector('.ext'); if (ex) ex.outerHTML = extHtml(); }
-  else if (a === 'fold') { var sec = t.parentNode, shut = sec.classList.toggle('shut'), fs = store.get('fold', {}); fs[sec.dataset.fold] = !shut; store.set('fold', fs); t.querySelector('i').textContent = shut ? '＋' : '−'; }
+  else if (a === 'fold') { var sec = t.parentNode, shut = sec.classList.toggle('shut'), fs = store.get('fold', {}); fs[sec.dataset.fold] = !shut; store.set('fold', fs); t.querySelector('i').textContent = shut ? '＋' : '−'; t.setAttribute('aria-expanded', !shut); }
   else if (a === 'dclose') { var dc = $('#dcard'); if (dc) dc.remove(); }
   else if (a === 'qn') { qCount = +t.dataset.n; quizSetup(); }
   else if (a === 'qstart') quizStart(t.dataset.kind);
-  else if (a === 'qwrong') { if (lastQ) quizStart(lastQ.kind, lastQ.wrong); }
+  else if (a === 'qwrong') { if (lastQ) quizStart(lastQ.kind, lastQ.wrong, lastQ.bks); }
   else if (a === 'qnext') quizNext();
   else if (a === 'ord') orderPick(+t.dataset.i);
   else if (a === 'ordreset') { if (Q && !Q.lock) { Q.pick = []; quizPanel(); } }
   else if (a === 'qreset') { var s = store.get('stat', {}); delete s[cur.id]; store.set('stat', s); quizSetup(); }
   else if (a === 'qskip') { if (Q && !Q.lock) reveal(); }
   else if (a === 'qhint') { var hEl = $('#hint') || panel.querySelector('.hint'); if (hEl && Q) { var ty = Q.cur.p.types && Q.cur.p.types[Q.cur.t] ? Q.cur.p.types[Q.cur.t][0] : ''; hEl.textContent = '💡 ' + ([Q.kind === 'name' ? '' : Q.cur.s, ty].filter(Boolean).join(' · ') || 'কোনো ইঙ্গিত নেই'); } }
-  else if (a === 'qquit') { if (Q && Q.i > 0) { Q.qs = Q.qs.slice(0, Q.i); quizEnd(); } else setMode('quiz'); }
+  else if (a === 'qquit') { var done = Q ? Q.i + (Q.lock ? 1 : 0) : 0; if (done > 0) { Q.qs = Q.qs.slice(0, done); quizEnd(); } else setMode('quiz'); }
   else if (a === 'study') setMode('study');
   else if (a === 'review') { var it = cur.items[+t.dataset.i]; setMode('study'); select(it, true); }
   else if (a === 'opt') {
@@ -968,6 +983,7 @@ panel.addEventListener('click', function (e) {
   }
 });
 document.addEventListener('keydown', function (e) {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.getAttribute && e.target.getAttribute('role') === 'button' && e.target.tagName === 'DIV') { e.preventDefault(); e.target.click(); return; }
   if (!Q || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
   if (Q.lock && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); quizNext(); }
   else if (!Q.lock && (Q.kind === 'name' || Q.kind === 'order' || Q.kind === 'book' || Q.kind === 'old') && e.key >= '1' && e.key <= '4') { var b = panel.querySelectorAll('.opts button')[+e.key - 1]; if (b) b.click(); }
@@ -979,7 +995,7 @@ $('#navAll').addEventListener('click', function () {
 $('#nav').addEventListener('click', function () { setTimeout(syncAll, 0); });
 $('#nav').addEventListener('click', function (e) {
   var sb = e.target.closest('.sgrp>.subj');
-  if (sb) { var sg = sb.parentNode, so2 = store.get('subjOpen', {}), shut = sg.classList.toggle('shut'); so2[sg.dataset.s] = !shut; store.set('subjOpen', so2); sb.querySelector('i').textContent = shut ? '＋' : '−'; return; }
+  if (sb) { var sg = sb.parentNode, so2 = store.get('subjOpen', {}), shut = sg.classList.toggle('shut'); so2[sg.dataset.s] = !shut; store.set('subjOpen', so2); sb.querySelector('i').textContent = shut ? '＋' : '−'; sb.setAttribute('aria-expanded', !shut); return; }
   var b = e.target.closest('.grp>button'); if (!b) return; var g = b.parentNode, s = store.get('open', {}), sh = g.classList.toggle('shut'); s[g.dataset.g] = !sh; store.set('open', s); b.querySelector('i').textContent = sh ? '＋' : '−';
 });
 $('#home').addEventListener('click', function (e) {

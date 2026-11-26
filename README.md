@@ -51,13 +51,15 @@ vendor/           Leaflet 1.9.4 + fonts (local copies)
 
 ## Licence
 
-Code © 2026 **Devnetra Consultancy**, released under the [MIT License](LICENSE). Bundled third-party data keeps its own licence (see below and LICENSE).
+Code © 2026 **Devnetra Consultancy**, released under the [MIT License](LICENSE). Bundled third-party data keeps its own licence — see below and [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
 
 ## Data & credits
 
 - Basemap tiles: © Esri and its data providers (online only).
 - Rivers, country boundaries (India point-of-view edition), populated places: [Natural Earth](https://www.naturalearthdata.com/) — public domain.
-- Indian state boundaries: india-in-data (based on Survey of India maps).
+- Indian state & UT boundaries: [DataMeet India](https://github.com/datameet/maps) — CC BY 4.0.
+- River courses of the Ganga, Bhagirathi, Alaknanda, Hooghly and 13 other Indian rivers: © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright) — ODbL.
+- Item photos: Wikimedia Commons (free licences; author and licence shown under each photo, linked to its file page).
 - Historical empire boundaries: [historical-basemaps](https://github.com/aourednik/historical-basemaps) by A. Ourednik — GPL-3.0; approximate.
 - Pin coordinates cross-checked against Wikipedia / Wikidata.
 - Map library: [Leaflet](https://leafletjs.com/) (BSD-2-Clause). Fonts: Fraunces & Hind Siliguri (SIL Open Font License 1.1).
