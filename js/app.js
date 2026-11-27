@@ -45,7 +45,7 @@ var GROUPS = [
   ['mix', 'সব বিষয় মিশিয়ে', 'Mixed Challenge', 'mix']
 ];
 // existing world-human pages → their subject homes
-var REGROUP = { 'w-countries': 'w-pol', 'w-capitals': 'w-pol', 'w-rivercities': 'w-pol', 'w-news': 'ir-world', 'w-orgs': 'ir-world' };
+var REGROUP = { 'w-stadiums': 'w-pol', 'w-countries': 'w-pol', 'w-capitals': 'w-pol', 'w-rivercities': 'w-pol', 'w-news': 'ir-world', 'w-orgs': 'ir-world' };
 GEO.pages.forEach(function (p) { if (REGROUP[p.id]) p.group = REGROUP[p.id]; else if (p.group === 'w-hum') p.group = 'w-econ'; });
 var BASES = {
   physical: ['Physical (প্রাকৃতিক)', 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Physical_Map/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 8, attribution: 'Tiles © Esri, US National Park Service' }],
@@ -163,6 +163,11 @@ function buildRemote(p) {
           if (f.neighbours && f.neighbours.length) x.push('🧭 Neighbouring states/UTs (' + f.neighbours.length + '): ' + f.neighbours.join(', '));
           var lines = []; if (f.tropic) lines.push('Tropic of Cancer passes'); if (f.meridian) lines.push('82.5°E Standard Meridian passes'); if (lines.length) x.push('📏 ' + lines.join(' · '));
           if (f.formed) x.push('🗓 Formed: ' + f.formed);
+          if (f.day) x.push('🎉 State day: ' + f.day);
+          if (f.lang) x.push('🗣 Official language: ' + f.lang);
+          if (f.hc) x.push('⚖ High Court: ' + f.hc);
+          var sym = [['🐾', f.animal], ['🐦', f.bird], ['🌸', f.flower], ['🌳', f.tree]].filter(function (q) { return q[1]; });
+          if (sym.length) x.push('State symbols — ' + sym.map(function (q) { return q[0] + ' ' + q[1]; }).join(' · '));
         }
         p.items.push({ k: 'poly', geo: { type: 'MultiPolygon', coordinates: G.grp[k].polys }, n: info ? info[0] : G.grp[k].raw, s: info ? 'রাজধানী: ' + info[1] : '', d: info ? info[2] : '', x: x, t: info ? info[3] : '' });
       });
@@ -214,7 +219,16 @@ function buildRemote(p) {
         (function walk(c) { if (typeof c[0] === 'number') { bb[0] = Math.min(bb[0], c[0]); bb[1] = Math.min(bb[1], c[1]); bb[2] = Math.max(bb[2], c[0]); bb[3] = Math.max(bb[3], c[1]); } else c.forEach(walk); })(f.geometry.coordinates);
         if ((bb[2] - bb[0]) * (bb[3] - bb[1]) < 0.3) return;
         var pop = pr.POP_EST ? ' · Pop. ~' + (pr.POP_EST / 1e6).toFixed(pr.POP_EST < 1e7 ? 1 : 0) + ' million' : '';
-        var it = { k: 'poly', geo: f.geometry, n: nm, s: pr.SUBREGION || pr.subregion || ct, d: (pr.NAME_LONG && pr.NAME_LONG !== nm ? pr.NAME_LONG : nm) + pop, t: keyName(ct) };
+        var it = { k: 'poly', geo: f.geometry, n: nm, s: pr.SUBREGION || pr.subregion || ct, d: (pr.NAME_LONG && pr.NAME_LONG !== nm ? pr.NAME_LONG : nm) + pop, t: keyName(ct) }, cf = (GEO.COUNTRYFACTS || {})[nm];
+        if (cf) {   // static-GK card: capital, currency, parliament, language, land neighbours
+          it.x = [];
+          if (cf.cap) it.x.push('🏙 Capital: ' + cf.cap);
+          if (cf.cur) it.x.push('💱 Currency: ' + cf.cur);
+          if (cf.leg) it.x.push('🏛 Parliament: ' + cf.leg);
+          if (cf.lang) it.x.push('🗣 Official language: ' + cf.lang);
+          if (cf.nb && cf.nb.length) it.x.push('🧭 Land neighbours (' + cf.nb.length + '): ' + cf.nb.join(', '));
+          if (cf.note) it.x.push('⭐ ' + cf.note);
+        }
         if (nm === 'India') india = it; else p.items.push(it);
       });
       if (india) {
