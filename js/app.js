@@ -664,9 +664,47 @@ function renderPanel() {
   if (mode === 'quiz') { if (Q) quizPanel(); else quizSetup(); return; }
   var ex = extHtml(), ch = chipsHtml();
   panel.innerHTML = fold('intro', 'ℹ পরিচিতি', '<p class="intro">' + esc(cur.intro || '') + '</p>') + (ex ? fold('ext', '🗺 সাম্রাজ্যের বিস্তার', ex) : '') + (ch ? fold('chips', '🏷 ধরন অনুযায়ী দেখাও', ch) : '') +
+    fold('print', '🖨 প্রিন্ট / ফাঁকা ম্যাপে অনুশীলন', '<p class="intro">ম্যাপ কাগজে প্রিন্ট বা PDF করো (প্রিন্ট ডায়ালগে "Save as PDF")। চিপ দিয়ে যে ধরনগুলো লুকোনো, সেগুলো বাদ যাবে।</p><div class="prow">' +
+      '<button data-act="print" data-k="num">🔢 নম্বর দেওয়া ম্যাপ<small>পরের পাতায় উত্তরপত্র</small></button>' +
+      '<button data-act="print" data-k="dot">📍 শুধু বিন্দু<small>নাম লিখে অনুশীলন</small></button>' +
+      '<button data-act="print" data-k="blank">⬜ একদম ফাঁকা<small>শুধু সীমানা</small></button>' +
+      '<button data-act="print" data-k="named">🏷 নামসহ ম্যাপ<small>রিভিশন শিট</small></button></div>', false) +
     '<input id="q" class="find" placeholder="এই পাতায় খোঁজো… (' + cur.items.length + 'টি)"><div id="list" class="list"></div>';
   fillList('');
   $('#q').addEventListener('input', function (e) { fillList(e.target.value); });
+}
+
+/* ---------------- print / outline-map practice ---------------- */
+var printing = false;
+function printMap(kind) {   // num: numbered pins + answer key · dot: unnamed dots · blank: borders only · named: revision sheet
+  if (printing || !cur || !cur.items) return; printing = true;
+  var vis = cur.items.filter(visible), base0 = curBase, prG = L.layerGroup(), view = [map.getCenter(), map.getZoom()];
+  document.body.classList.add('printing', 'pr-' + kind);
+  setLabels(false); setBase('offline', true); sel = null; tmpG.clearLayers(); map.closePopup();
+  if (kind === 'blank') map.removeLayer(layerG);
+  if (kind === 'num') vis.forEach(function (it, i) {
+    L.marker(it.a, { interactive: false, keyboard: false, icon: L.divIcon({ className: 'pnum', html: String(i + 1), iconSize: null }) }).addTo(prG);
+  });
+  prG.addTo(map);
+  var key = document.createElement('section'); key.id = 'printKey';
+  var head = '<h2>' + esc(cur.title) + (cur.bn ? ' · ' + esc(cur.bn) : '') + '</h2>';
+  if (kind === 'num') key.innerHTML = head + '<h3>উত্তরপত্র</h3><ol>' + vis.map(function (it) { return '<li><b>' + esc(it.n) + '</b>' + (it.s ? ' — ' + esc(it.s) : '') + '</li>'; }).join('') + '</ol>';
+  else if (kind === 'dot' || kind === 'blank') key.innerHTML = head + '<h3>এই জায়গাগুলো ম্যাপে বসাও / চিনে লেখো</h3><ol>' + vis.map(function (it) { return '<li>' + esc(it.n) + '</li>'; }).join('') + '</ol>';
+  else key.innerHTML = '';
+  var ttl = document.createElement('div'); ttl.id = 'printTitle'; ttl.innerHTML = head + '<small>GeoOnline · geoonline.vercel.app</small>';
+  document.body.appendChild(ttl); document.body.appendChild(key);
+  map.invalidateSize();
+  if (vis.length) map.fitBounds(L.latLngBounds(vis.map(function (it) { return it.a; })).pad(0.08), { maxZoom: cur.world ? 5 : 8 }); else fit();
+  drawNames();
+  var done = function () {
+    window.removeEventListener('afterprint', done); if (!printing) return; printing = false;
+    document.body.classList.remove('printing', 'pr-' + kind); key.remove(); ttl.remove(); map.removeLayer(prG);
+    if (!map.hasLayer(layerG)) layerG.addTo(map);
+    setBase(base0, true); setLabels(mode === 'study' && bst.esri);
+    map.invalidateSize(); map.setView(view[0], view[1]); drawNames();
+  };
+  window.addEventListener('afterprint', done);
+  setTimeout(function () { window.print(); setTimeout(done, 400); }, 700);   // give the outline base a moment to draw; some browsers never fire afterprint
 }
 
 /* ---------------- quiz ---------------- */
@@ -974,6 +1012,7 @@ panel.addEventListener('click', function (e) {
   else if (a === 'qhint') { var hEl = $('#hint') || panel.querySelector('.hint'); if (hEl && Q) { var ty = Q.cur.p.types && Q.cur.p.types[Q.cur.t] ? Q.cur.p.types[Q.cur.t][0] : ''; hEl.textContent = '💡 ' + ([Q.kind === 'name' ? '' : Q.cur.s, ty].filter(Boolean).join(' · ') || 'কোনো ইঙ্গিত নেই'); } }
   else if (a === 'qquit') { var done = Q ? Q.i + (Q.lock ? 1 : 0) : 0; if (done > 0) { Q.qs = Q.qs.slice(0, done); quizEnd(); } else setMode('quiz'); }
   else if (a === 'study') setMode('study');
+  else if (a === 'print') printMap(t.dataset.k);
   else if (a === 'review') { var it = cur.items[+t.dataset.i]; setMode('study'); select(it, true); }
   else if (a === 'opt') {
     if (!Q || Q.lock) return; var o = Q.opts[+t.dataset.i], ok = o === Q.cur;
