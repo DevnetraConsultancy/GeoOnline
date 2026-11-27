@@ -250,7 +250,7 @@ GEO.add({
   ['Nohkalikai Falls',25.275,91.686,'Meghalaya (Cherrapunji)','~340 m; tallest plunge waterfall of India; rain-fed from the Khasi plateau.'],
   ['Nohsngithiang (Seven Sisters) Falls',25.25,91.74,'Meghalaya (Mawsmai)','Seven-segmented seasonal fall over limestone cliffs of Khasi Hills.'],
   ['Elephant Falls',25.537,91.822,'Meghalaya (Shillong)','Three-step fall near Shillong Peak.'],
-  ['Vantawng Falls',23.07,92.75,'Mizoram (Serchhip)','Vanva river; highest waterfall of Mizoram (~230 m).']
+  ['Vantawng Falls',23.257,92.762,'Mizoram (Serchhip)','Vanva river; highest waterfall of Mizoram (~230 m).']
  ]
 });
 

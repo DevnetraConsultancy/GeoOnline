@@ -49,3 +49,16 @@ Regional pages are skipped because a pin there stands for a whole region: vegeta
 ## Still to do
 - Search-based matching for the 2,324 pins that have no exact Wikipedia title. This is slow because of Wikipedia rate limits.
 - Book-author pins (`bk-*` pages): these are checked by the place named on the row.
+
+## Second pass — the 2,324 pins without an exact Wikipedia article (Nov 2026)
+
+Checked against Wikidata (coordinates + type + state/country), doubtful cases read on Wikipedia. Full table: `pin-check-wikidata.csv`.
+
+| Result | Pins |
+|---|---|
+| OK (same entity within 10 km, or 25 km for large features / inside the named feature) | 1,882 |
+| Moved (confident, evidence below) | 4 |
+| No confident Wikidata match (no item, or only a different place/kind with the same name) | 438 |
+
+Moves: Amri (Sindh) 31 km → 25.910, 67.924 (Wikipedia: ~160 km south of Mohenjo-daro); Vantawng Falls 21 km → 23.257, 92.762 (5 km south of Thenzawl); Bhaskara II / Patnadevi 16 km → 20.330, 74.967 (18 km SW of Chalisgaon); Premchand / Lamhi 12 km → 25.378, 82.994 (just north of Varanasi).
+Several large Wikidata differences turned out to be Wikidata errors (e.g. Vikramshila Setu, Barpeta Satra, Chikhaldara); those pins were kept.

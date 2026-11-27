@@ -404,7 +404,7 @@ GEO.add({
           { t: "Brihat Samhita", y: "6th c. CE", lang: "Sanskrit", sum: "Encyclopaedic work of about 100 chapters on astronomy, omens, rainfall prediction, architecture and temple building, iconography, gems, perfumes, agriculture and finding underground water (dakargala).", key: "Encyclopaedia; groundwater divining; temple architecture" },
           { t: "Brihat Jataka", y: "6th c. CE", lang: "Sanskrit", sum: "Standard text on horoscopic astrology (hora), drawing on Greek terms such as hora and kendra.", key: "Hora shastra; Greek loanwords" } ] } ],
 
-    ["Bhaskara II (Bhaskaracharya)", 20.4627, 75.0128, "Patan near Chalisgaon (Patnadevi), Maharashtra", "Siddhanta Shiromani incl. Lilavati & Bijaganita (1150)", "sci",
+    ["Bhaskara II (Bhaskaracharya)", 20.3300, 74.9674, "Patan near Chalisgaon (Patnadevi), Maharashtra", "Siddhanta Shiromani incl. Lilavati & Bijaganita (1150)", "sci",
       { era: "1114–1185 CE",
         place: "Pin: Chalisgaon area, near Patan (Patnadevi) where an inscription records the school founded by his grandson; his birthplace Vijjadavida is disputed",
         idea: "Mathematics of motion: he used the idea of instantaneous velocity (tatkalika-gati) and infinitesimals in astronomy, and described an attractive force of the Earth.",

@@ -602,7 +602,7 @@ GEO.add({
           { t: 'Bharat Durdasha (India’s Plight)', y: '1875', lang: 'Hindi (play)', sum: 'Allegorical play lamenting India’s decline and poverty under British rule and Indians’ own disunity and apathy.', key: 'Economic drain; early nationalism' },
           { t: 'Kavivachan Sudha', y: '1868', lang: 'Hindi (journal)', sum: 'Literary journal he founded, publishing poetry and later prose, and a vehicle for social and patriotic ideas.', key: 'Hindi journalism' }
         ] } ],
-    ['Premchand', 25.2800, 82.9500, 'Lamhi, near Varanasi', 'Godaan; Kafan; realist novelist of village India; first PWA president (1936)', 'hindi',
+    ['Premchand', 25.3783, 82.9941, 'Lamhi, near Varanasi', 'Godaan; Kafan; realist novelist of village India; first PWA president (1936)', 'hindi',
       { era: '1880–1936',
         place: 'Born at Lamhi village near Banaras (pin)',
         more: 'Born Dhanpat Rai Srivastava; wrote first in Urdu as Nawab Rai, then in Hindi as Premchand. Called "Upanyas Samrat". His realism exposed zamindari oppression, debt, caste and the condition of women and peasants. Started the magazine Hans (1930) and presided over the first Progressive Writers’ Association meeting in Lucknow (1936).',
